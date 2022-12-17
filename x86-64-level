@@ -88,20 +88,22 @@ has_cpu_flags() {
 }
 
 
+level=0
+
 determine_cpu_version() {
-    ## x86-64
+    ## x86-64-v0 (can this happen?)
     level=0
-    has_cpu_flags lm cmov cx8 fpu fxsr mmx syscall sse2 || return 0
     
     ## x86-64-v1
+    has_cpu_flags lm cmov cx8 fpu fxsr mmx syscall sse2 || return 0
     level=1
-    has_cpu_flags cx16 lahf_lm popcnt sse4_1 sse4_2 ssse3 || return 0
 
     ## x86-64-v2
+    has_cpu_flags cx16 lahf_lm popcnt sse4_1 sse4_2 ssse3 || return 0
     level=2
-    has_cpu_flags avx avx2 bmi1 bmi2 f16c fma abm movbe xsave || return 0
     
     ## x86-64-v3
+    has_cpu_flags avx avx2 bmi1 bmi2 f16c fma abm movbe xsave || return 0
     level=3
 
     ## x86-64-v4
@@ -112,7 +114,6 @@ determine_cpu_version() {
 
 report_cpu_version() {
     flags=$(get_cpu_flags)
-    level=0
     determine_cpu_version
     echo "$level"
 }
