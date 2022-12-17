@@ -1,3 +1,5 @@
+[![shellcheck](https://github.com/HenrikBengtsson/x86-64-level/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/HenrikBengtsson/x86-64-level/actions/workflows/shellcheck.yml)
+
 # x86-64-level - Get the x86-64 Microarchitecture Level on the Current Machine
 
 TL;DR: The `x86-64-level` tool identifies the current CPU supports
