@@ -49,7 +49,7 @@ machine, the produced binary will only use x86-64-v3 instructions and
 will therefor also run on the newer x86-64-v4 machine.
 
 Tips: If you work on a high-performance compute (HPC) environment with
-compute nodes o different generations of CPUs, and you want a smooth
+compute nodes of different generations of CPUs, and you want a smooth
 ride, compile your software tools to use the oldest x86-64 level.
 This won't make best use of the more modern CPUs, but it will run on
 all compute nodes, so you won't run into the 'caught illegal
