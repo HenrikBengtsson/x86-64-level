@@ -58,7 +58,7 @@ version() {
 get_cpu_name() {
     local name
     name=$(grep -E "^model name[[:space:]]*:" /proc/cpuinfo | head -1)
-    name=$(echo "${name#model name*:}")
+    name="${name#model name*:}"
     echo "${name## }"
 }
 
@@ -79,7 +79,7 @@ has_cpu_flags() {
                 ;;
             *)
                 if "$verbose"; then
-                               echo >&2 "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which this CPU ["$(get_cpu_name)"] does not support"
+                               echo >&2 "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which this CPU [$(get_cpu_name)] does not support"
                 fi
                 return 1
                 ;;
