@@ -1,0 +1,34 @@
+on: [push, pull_request]
+
+name: shellcheck
+
+jobs:
+  checks:
+    if: "! contains(github.event.head_commit.message, '[ci skip]')"
+
+    timeout-minutes: 5
+
+    runs-on: ubuntu-22.04
+    
+    name: shellcheck
+
+    strategy:
+      fail-fast: false
+
+    env:
+      VERSION: 0.9.0
+      
+    steps:
+    - name: Checkout git repository
+      uses: actions/checkout@v3
+
+    - name: Install ShellCheck
+      run: |
+        curl -L -O "https://github.com/koalaman/shellcheck/releases/download/v$VERSION/shellcheck-v$VERSION.linux.x86_64.tar.xz"
+        tar Jxf "shellcheck-v$VERSION.linux.x86_64.tar.xz"
+        mv "shellcheck-v$VERSION/shellcheck" .
+        ./shellcheck --version
+
+    - name: ShellCheck
+      run: |
+        ./shellcheck -- x86-64-level
