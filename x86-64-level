@@ -22,8 +22,8 @@
 #' x86-64-v3
 #'
 #' $ x86-64-level --verbose
-#' Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which
-#' this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] does not support
+#' Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which is
+#' not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
 #' 3
 #'
 #' Authors:
@@ -79,7 +79,7 @@ has_cpu_flags() {
                 ;;
             *)
                 if "$verbose"; then
-                               echo >&2 "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which this CPU [$(get_cpu_name)] does not support"
+                               echo >&2 "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which is not supported by this CPU [$(get_cpu_name)]"
                 fi
                 return 1
                 ;;
