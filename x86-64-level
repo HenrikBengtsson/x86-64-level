@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#' Gets the x86-64 Microarchitecture Level on the Current Machine
+#' Get the x86-64 Microarchitecture Level on the Current Machine
 #'
 #' Queries the CPU information to infer which level of x86-64
 #' microarchitecture is supported by the CPU on the current machine,
