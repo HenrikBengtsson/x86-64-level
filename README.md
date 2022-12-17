@@ -94,6 +94,11 @@ $ ./x86-64-level --version
 $ ./x86-64-level
 ```
 
+## License
+
+The content of this repository is released under the [CC BY-SA 4.0]
+license.
+
 
 ## Authors
 
@@ -106,3 +111,5 @@ $ ./x86-64-level
 [Gilles' implementation]: https://unix.stackexchange.com/a/631320
 [Gilles]: https://stackexchange.com/users/164368/
 [gioele]: https://unix.stackexchange.com/users/14861/
+[CC BY-SA 4.0]: https://creativecommons.org/licenses/by-sa/4.0/
+

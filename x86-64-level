@@ -26,6 +26,10 @@
 #' not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
 #' 3
 #'
+#' Version: 0.1.0
+#' License: CC BY-SA 4.0
+#' Source: https://github.com/ucsf-wynton/wynton-tools
+#'
 #' Authors:
 #' * Henrik Bengtsson (expanded on Gilles implementation [2])
 #' * StackExchange user 'Gilles'
@@ -36,9 +40,6 @@
 #' References:
 #' [1] https://www.wikipedia.org/wiki/X86-64#Microarchitecture_levels
 #' [2] https://unix.stackexchange.com/a/631320
-#'
-#' Version: 0.1.0
-#' Source: https://github.com/ucsf-wynton/wynton-tools
 
 #---------------------------------------------------------------------
 # CLI functions
