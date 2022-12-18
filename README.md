@@ -30,7 +30,7 @@ Software can be written so that they use the most powerful set of CPU
 features available.  This optimization happens at compile time and
 allows the software to run more efficiently.  However, a software
 binary that was compiled towards the x86-64-v4 level cannot run on an
-older machine with a CPU that only supports a x86-64-v3.  If we
+older machine with a CPU that only supports, say, x86-64-v3.  If we
 attempt to run the software on the older machine, it will crash and we
 might get something like:
 
@@ -39,21 +39,21 @@ might get something like:
 address 0x2b3a8b234ccd, cause 'illegal operand'
 ```
 
-This is because the older CPU does not understand one of the low-level
+This is because the older CPU does not understand one of the CPU
 instructions ("operand").  Note that the software might not crash each
 time.  It will only do so if it reach the part of the code that uses
 the never CPU instructions.
 
-In constrast, if we compile the software on the older x86-64-v3
+In contrast, if we compile the software on the older x86-64-v3
 machine, the produced binary will only use x86-64-v3 instructions and
 will therefor also run on the newer x86-64-v4 machine.
 
 Tips: If you work on a high-performance compute (HPC) environment with
 compute nodes of different generations of CPUs, and you want a smooth
 ride, compile your software tools to use the oldest x86-64 level.
-This won't make best use of the more modern CPUs, but it will run on
-all compute nodes, so you won't run into the 'caught illegal
-operation' problem.
+This won't make best use of the more modern CPUs, but the software
+will run on all compute nodes and you won't run into the 'caught
+illegal operation' problem.
 
 
 # Finding CPU's x86-64 level
