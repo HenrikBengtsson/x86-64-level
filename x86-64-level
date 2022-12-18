@@ -26,7 +26,10 @@
 #' not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
 #' 3
 #'
-#' Version: 0.1.0
+#' $ cat /proc/cpuinfo | x86-64-level -
+#' 3
+#'
+#' Version: 0.1.0-9001
 #' License: CC BY-SA 4.0
 #' Source: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -56,31 +59,53 @@ version() {
 #---------------------------------------------------------------------
 # CPU functions
 #---------------------------------------------------------------------
+data=
+read_input() {
+    if $stdin; then
+        data=$(< /dev/stdin)
+    else
+        data=$(< /proc/cpuinfo)
+    fi
+    if [[ -z ${data} ]]; then
+        echo >&2 "ERROR: Input data is empty"
+        exit 1
+    fi
+}
+
 get_cpu_name() {
     local name
-    name=$(grep -E "^model name[[:space:]]*:" /proc/cpuinfo | head -1)
+    bfr=$(grep -E "^model name[[:space:]]*:" <<< "${data}")
+    name=$(echo "$bfr" | head -1)
     name="${name#model name*:}"
     echo "${name## }"
 }
 
+
 get_cpu_flags() {
     local flags
-    flags=$(grep "^flags[[:space:]]*:" < /proc/cpuinfo | head -n 1)
-    ## Note, it's important to keep a trailing space
-    echo "${flags#*:} "
+    flags=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
+    flags="${flags#*:}"
+    echo "${flags## }"
 }
 
 
 has_cpu_flags() {
     local flag
+    local msg
+    local cpu_name
+    
     for flag; do
-        case "$flags" in
+        ## Note, it's important to keep a trailing space
+        case " ${flags} " in
             *" $flag "*)
                 :
                 ;;
             *)
                 if "$verbose"; then
-                               echo >&2 "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which is not supported by this CPU [$(get_cpu_name)]"
+                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which is not supported by this CPU"
+                    cpu_name=$(get_cpu_name)
+                    [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
+                    echo >&2 "${msg}"
                 fi
                 return 1
                 ;;
@@ -114,7 +139,12 @@ determine_cpu_version() {
 
 
 report_cpu_version() {
+    read_input
     flags=$(get_cpu_flags)
+    if [[ -z ${flags} ]]; then
+        echo >&2 "ERROR: No CPU 'flags' entry in the input data"
+        exit 1
+    fi
     determine_cpu_version
     echo "$level"
 }
@@ -124,6 +154,7 @@ report_cpu_version() {
 # MAIN
 #---------------------------------------------------------------------
 verbose=false
+stdin=false
 
 # Parse command-line options
 while [[ $# -gt 0 ]]; do
@@ -136,6 +167,8 @@ while [[ $# -gt 0 ]]; do
         exit 0
     elif [[ "$1" == "--verbose" ]]; then
         verbose=true
+    elif [[ "$1" == "-" ]]; then
+        stdin=true
     else
         echo >&2 "ERROR: Unknown option: $1"
         exit 2
