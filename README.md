@@ -73,6 +73,14 @@ $ x86-64-level
 3
 ```
 
+and
+
+```sh
+$ level=$(x86-64-level)
+$ echo "x86-64-v${level}"
+x86-64-v3
+```
+
 If you want to know an "explanation", specify option `--verbose`, e.g.
 
 ```sh
@@ -101,8 +109,8 @@ $ echo $?
 0
 
 $ x86-64-level --assert=4
-The CPU on this host ('gandalf') supports x86-64-v3, which is less
-than the required x86-64-v4
+The CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] on this host ('dev2')
+supports x86-64-v3, which is less than the required x86-64-v4
 $ echo $?
 1
 ```
@@ -156,4 +164,3 @@ license.
 [Gilles]: https://stackexchange.com/users/164368/
 [gioele]: https://unix.stackexchange.com/users/14861/
 [CC BY-SA 4.0]: https://creativecommons.org/licenses/by-sa/4.0/
-
