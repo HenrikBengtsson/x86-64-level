@@ -36,12 +36,12 @@
 #' 0
 #'
 #' $ x86-64-level --assert=4
-#' The CPU on this host ('gandalf') supports x86-64-v3, which is less
-#' than the required x86-64-v4
+#' The CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] on this host ('dev2')
+#' supports x86-64-v3, which is less than the required x86-64-v4
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.0-9000
+#' Version: 0.2.0-9001
 #' License: CC BY-SA 4.0
 #' Source: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -212,11 +212,13 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-
 if [[ -n $assert ]]; then
     version=$(report_cpu_version)
     if [[ $version < $assert ]]; then
-        >&2 echo "The CPU on this host ('${HOSTNAME}') supports x86-64-v${version}, which is less than the required x86-64-v${assert}"
+        read_input
+        cpu_info=$(get_cpu_name)
+        [[ -n ${cpu_info} ]] && cpu_info=" [${cpu_info}]"
+        >&2 echo "The CPU${cpu_info} on this host ('${HOSTNAME}') supports x86-64-v${version}, which is less than the required x86-64-v${assert}"
         exit 1
     fi
 else
