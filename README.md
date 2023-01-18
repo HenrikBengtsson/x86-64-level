@@ -3,7 +3,12 @@
 # x86-64-level - Get the x86-64 Microarchitecture Level on the Current Machine
 
 TL;DR: The `x86-64-level` tool identifies the current CPU supports
-x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4.
+x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4, e.g.
+
+```sh
+$ x86-64-level
+3
+```
 
 
 # Background
@@ -56,7 +61,9 @@ will run on all compute nodes and you won't run into the 'caught
 illegal operation' problem.
 
 
-# Finding CPU's x86-64 level
+# Usage
+
+## Finding CPU's x86-64 level
 
 This tool, `x86-64-level`, allows you to query the which x86-64 level
 the CPU on current machine supports.  For example,
@@ -76,10 +83,47 @@ this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] does not support
 ```
 
 
+## Assert minimum x86-64 level
+
+To test if the CPU supports a minimum level of x86-64, use the
+`--assert=<level>` option.  For example,
+
+```sh
+$ x86-64-level
+3
+
+$ x86-64-level --assert=2
+$ echo $?
+0
+
+$ x86-64-level --assert=3
+$ echo $?
+0
+
+$ x86-64-level --assert=4
+The CPU on this host ('gandalf') supports x86-64-v3, which is less
+than the required x86-64-v4
+$ echo $?
+1
+```
+
+To use this as a gatekeeper in a shell script, add:
+
+```sh
+x86-64-level --assert=4 || exit 1
+```
+
+This will output that error message (to the standard error) and exit
+the script with exit code 1, if, and only if, the current machine does
+not support x86-64-v4. In all other cases, it continue silently.
+
+
+
 ## Installation
 
 The `x86-64-level` tool is a standalone Linux Bash script that queries
-`/proc/cpuinfo`.  To install it, download the script and set the executable flag;
+`/proc/cpuinfo`.  To install it, download the script and set the
+executable flag;
 
 ```sh
 $ curl -L -O https://raw.githubusercontent.com/HenrikBengtsson/x86-64-level/main/x86-64-level
