@@ -2,6 +2,8 @@
 
 ## New Features
 
+ * Add support for `x86-64-level --assert=<level>`.
+ 
  * Add support for `cat /proc/cpuinfo | x86-64-level -`.
 
 
