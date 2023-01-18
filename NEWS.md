@@ -1,7 +1,5 @@
-# Version (development version)
+# Version 0.2.1 [2023-01-18]
 
- * ...
- 
  * Now `--assert` reports also on the CPU name.
  
 

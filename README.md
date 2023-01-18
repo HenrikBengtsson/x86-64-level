@@ -73,6 +73,14 @@ $ x86-64-level
 3
 ```
 
+and
+
+```sh
+$ level=$(x86-64-level)
+$ echo "x86-64-v${level}"
+x86-64-v3
+```
+
 If you want to know an "explanation", specify option `--verbose`, e.g.
 
 ```sh
