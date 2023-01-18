@@ -9,9 +9,11 @@
 #' x86-64-version
 #'
 #' Options:
-#'   --help     Show this help
-#'   --version  Show the version of this tool
-#'   --verbose  Explain the identified level
+#'   --help            Show this help
+#'   --version         Show the version of this tool
+#'   --verbose         Explain the identified level
+#'   --assert=<level>  Assert that CPU supports x86-64-v<level> with
+#'                     exit code 0 is supported, otherwise 1
 #'
 #' Examples:
 #' $ x86-64-level
@@ -26,7 +28,20 @@
 #' not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
 #' 3
 #'
-#' Version: 0.1.0
+#' $ cat /proc/cpuinfo | x86-64-level -
+#' 3
+#'
+#' $ x86-64-level --assert=2
+#' $ echo $?
+#' 0
+#'
+#' $ x86-64-level --assert=4
+#' The CPU on this host ('gandalf') supports x86-64-v3, which is less
+#' than the required x86-64-v4
+#' $ echo $?
+#' 1
+#'
+#' Version: 0.2.0
 #' License: CC BY-SA 4.0
 #' Source: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -56,31 +71,53 @@ version() {
 #---------------------------------------------------------------------
 # CPU functions
 #---------------------------------------------------------------------
+data=
+read_input() {
+    if $stdin; then
+        data=$(< /dev/stdin)
+    else
+        data=$(< /proc/cpuinfo)
+    fi
+    if [[ -z ${data} ]]; then
+        echo >&2 "ERROR: Input data is empty"
+        exit 1
+    fi
+}
+
 get_cpu_name() {
     local name
-    name=$(grep -E "^model name[[:space:]]*:" /proc/cpuinfo | head -1)
+    bfr=$(grep -E "^model name[[:space:]]*:" <<< "${data}")
+    name=$(echo "$bfr" | head -1)
     name="${name#model name*:}"
     echo "${name## }"
 }
 
+
 get_cpu_flags() {
     local flags
-    flags=$(grep "^flags[[:space:]]*:" < /proc/cpuinfo | head -n 1)
-    ## Note, it's important to keep a trailing space
-    echo "${flags#*:} "
+    flags=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
+    flags="${flags#*:}"
+    echo "${flags## }"
 }
 
 
 has_cpu_flags() {
     local flag
+    local msg
+    local cpu_name
+    
     for flag; do
-        case "$flags" in
+        ## Note, it's important to keep a trailing space
+        case " ${flags} " in
             *" $flag "*)
                 :
                 ;;
             *)
                 if "$verbose"; then
-                               echo >&2 "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which is not supported by this CPU [$(get_cpu_name)]"
+                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which is not supported by this CPU"
+                    cpu_name=$(get_cpu_name)
+                    [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
+                    echo >&2 "${msg}"
                 fi
                 return 1
                 ;;
@@ -114,7 +151,12 @@ determine_cpu_version() {
 
 
 report_cpu_version() {
+    read_input
     flags=$(get_cpu_flags)
+    if [[ -z ${flags} ]]; then
+        echo >&2 "ERROR: No CPU 'flags' entry in the input data"
+        exit 1
+    fi
     determine_cpu_version
     echo "$level"
 }
@@ -124,6 +166,8 @@ report_cpu_version() {
 # MAIN
 #---------------------------------------------------------------------
 verbose=false
+stdin=false
+assert=
 
 # Parse command-line options
 while [[ $# -gt 0 ]]; do
@@ -136,6 +180,31 @@ while [[ $# -gt 0 ]]; do
         exit 0
     elif [[ "$1" == "--verbose" ]]; then
         verbose=true
+    elif [[ "$1" == "-" ]]; then
+        stdin=true
+    elif [[ "$1" == "--assert" ]]; then
+        verbose=true
+    ## Options (--key=value):
+    elif [[ "$1" =~ ^--.*=.*$ ]]; then
+        key=${1//--}
+        key=${key//=*}
+        value=${1//--[[:alpha:]]*=}
+        if [[ -z $value ]]; then
+            merror "Option '--$key' must not be empty"
+        fi
+        if [[ "$key" == "assert" ]]; then
+            assert=$value
+            if [[ ! $assert =~ ^-?[0-9]+$ ]]; then
+                echo >&2 "ERROR: Option --assert does not specify an integer: $assert"
+                exit 2
+            elif [[ $assert -lt 1 ]] || [[ $assert -gt 4 ]]; then
+                echo >&2 "ERROR: Option --assert is out of range [1,4]: $assert"
+                exit 2
+            fi
+        else
+            echo >&2 "ERROR: Unknown option: $1"
+            exit 2
+        fi
     else
         echo >&2 "ERROR: Unknown option: $1"
         exit 2
@@ -144,4 +213,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-report_cpu_version
+if [[ -n $assert ]]; then
+    version=$(report_cpu_version)
+    if [[ $version < $assert ]]; then
+        >&2 echo "The CPU on this host ('${HOSTNAME}') supports x86-64-v${version}, which is less than the required x86-64-v${assert}"
+        exit 1
+    fi
+else
+    report_cpu_version
+fi
