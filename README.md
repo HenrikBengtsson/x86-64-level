@@ -86,7 +86,7 @@ If you want to know an "explanation", specify option `--verbose`, e.g.
 ```sh
 $ x86-64-level --verbose
 Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which
-this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] does not support
+is not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
 3
 ```
 
