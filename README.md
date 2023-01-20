@@ -47,7 +47,7 @@ address 0x2b3a8b234ccd, cause 'illegal operand'
 This is because the older CPU does not understand one of the CPU
 instructions ("operands").  Note that the software might not crash each
 time.  It will only do so if it reach the part of the code that uses
-the never CPU instructions.
+a too new CPU instruction.
 
 In contrast, if we compile the software on the older x86-64-v3
 machine, the produced binary will only use x86-64-v3 instructions and
