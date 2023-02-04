@@ -28,8 +28,9 @@ microarchitecture levels]:
 
 The x86-64-v1 level is the same as the original, baseline x86-64
 level.  These levels are subsets of each other, i.e. x86-64-v1 ⊂
-x86-64-v2 ⊂ x86-64-v3 ⊂ x86-64-v4.
-
+x86-64-v2 ⊂ x86-64-v3 ⊂ x86-64-v4.  For a CPU to support a level, it
+must support _all_ CPU features of that version level, and, because
+they are subsets of each other, all those of the lower versions.
 
 Software can be written so that they use the most powerful set of CPU
 features available.  This optimization happens at compile time and
