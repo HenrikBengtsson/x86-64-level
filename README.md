@@ -45,6 +45,12 @@ might get something like:
 address 0x2b3a8b234ccd, cause 'illegal operand'
 ```
 
+or
+
+```
+Illegal instruction (core dumped)
+```
+
 This is because the older CPU does not understand one of the CPU
 instructions ("operands").  Note that the software might not crash each
 time.  It will only do so if it reach the part of the code that uses
