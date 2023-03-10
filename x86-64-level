@@ -73,14 +73,16 @@ version() {
 #---------------------------------------------------------------------
 data=
 read_input() {
-    if $stdin; then
-        data=$(< /dev/stdin)
-    else
-        data=$(< /proc/cpuinfo)
-    fi
     if [[ -z ${data} ]]; then
-        echo >&2 "ERROR: Input data is empty"
-        exit 1
+        if $stdin; then
+            data=$(< /dev/stdin)
+        else
+            data=$(< /proc/cpuinfo)
+        fi
+        if [[ -z ${data} ]]; then
+            echo >&2 "ERROR: Input data is empty"
+            exit 1
+        fi
     fi
 }
 
@@ -97,7 +99,18 @@ get_cpu_flags() {
     local flags
     flags=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
     flags="${flags#*:}"
-    echo "${flags## }"
+    flags="${flags## }"
+    if grep -v -q -E "^[[:lower:][:digit:]_ ]+$" <<< "${flags}"; then
+        echo >&2 "ERROR: Cannot reliably infer the CPU x86-64 level, because the format of the CPU flags comprise of other symbols than only lower-case letters, digits, and underscores: '${flags}'"
+        exit 1
+    fi
+    echo "${flags}"
+}
+
+
+validate_cpu_flags() {
+    read_input
+    get_cpu_flags > /dev/null
 }
 
 
@@ -213,6 +226,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -n $assert ]]; then
+    validate_cpu_flags
     version=$(report_cpu_version)
     if [[ $version < $assert ]]; then
         read_input
@@ -222,5 +236,6 @@ if [[ -n $assert ]]; then
         exit 1
     fi
 else
+    validate_cpu_flags
     report_cpu_version
 fi

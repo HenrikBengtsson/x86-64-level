@@ -1,3 +1,10 @@
+# Version (development version)
+
+ * Now `x86-64-level` asserts that the input CPU flags are of the
+   correct format, which is assumed to be only lower-case letters,
+   digits, and underscores.
+
+
 # Version 0.2.1 [2023-01-18]
 
  * Now `--assert` reports also on the CPU name.
