@@ -56,7 +56,7 @@ instructions ("operands").  Note that the software might not crash each
 time.  It will only do so if it reach the part of the code that uses
 a too new CPU instruction.
 
-In contrast, if we compile the software on the older x86-64-v3
+In contrast, if we compile the software towards the older x86-64-v3
 machine, the produced binary will only use x86-64-v3 instructions and
 will therefor also run on the newer x86-64-v4 machine.
 
