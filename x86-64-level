@@ -41,9 +41,9 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1-9004
+#' Version: 0.2.1-9005
 #' License: CC BY-SA 4.0
-#' Source: https://github.com/ucsf-wynton/wynton-tools
+#' Source code: https://github.com/ucsf-wynton/wynton-tools
 #'
 #' Authors:
 #' * Henrik Bengtsson (expanded on Gilles implementation [2])
