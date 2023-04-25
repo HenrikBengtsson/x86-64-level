@@ -6,7 +6,7 @@
 #' i.e. x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4.
 #'
 #' Usage:
-#' x86-64-version
+#' x86-64-level
 #'
 #' Options:
 #'   --help            Show this help
@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1-9003
+#' Version: 0.2.1-9004
 #' License: CC BY-SA 4.0
 #' Source: https://github.com/ucsf-wynton/wynton-tools
 #'
