@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1-9005
+#' Version: 0.2.1-9006
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -203,7 +203,8 @@ while [[ $# -gt 0 ]]; do
         key=${key//=*}
         value=${1//--[[:alpha:]]*=}
         if [[ -z ${value} ]]; then
-            merror "Option '--${key}' must not be empty"
+            echo >&2 "ERROR: Option '--${key}' must not be empty"
+            exit 2
         fi
         if [[ "${key}" == "assert" ]]; then
             assert=${value}
