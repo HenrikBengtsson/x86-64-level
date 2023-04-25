@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1-9001
+#' Version: 0.2.1-9002
 #' License: CC BY-SA 4.0
 #' Source: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -74,7 +74,7 @@ version() {
 data=
 read_input() {
     if [[ -z ${data} ]]; then
-        if $stdin; then
+        if ${stdin}; then
             data=$(< /dev/stdin)
         else
             data=$(< /proc/cpuinfo)
@@ -89,7 +89,7 @@ read_input() {
 get_cpu_name() {
     local name
     bfr=$(grep -E "^model name[[:space:]]*:" <<< "${data}")
-    name=$(echo "$bfr" | head -n 1)
+    name=$(echo "${bfr}" | head -n 1)
     name="${name#model name*:}"
     echo "${name## }"
 }
@@ -122,12 +122,12 @@ has_cpu_flags() {
     for flag; do
         ## Note, it's important to keep a trailing space
         case " ${flags} " in
-            *" $flag "*)
+            *" ${flag} "*)
                 :
                 ;;
             *)
-                if "$verbose"; then
-                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which is not supported by this CPU"
+                if "${verbose}"; then
+                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
                     cpu_name=$(get_cpu_name)
                     [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
                     echo >&2 "${msg}"
@@ -171,7 +171,7 @@ report_cpu_version() {
         exit 1
     fi
     determine_cpu_version
-    echo "$level"
+    echo "${level}"
 }
 
 
@@ -202,16 +202,16 @@ while [[ $# -gt 0 ]]; do
         key=${1//--}
         key=${key//=*}
         value=${1//--[[:alpha:]]*=}
-        if [[ -z $value ]]; then
-            merror "Option '--$key' must not be empty"
+        if [[ -z ${value} ]]; then
+            merror "Option '--${key}' must not be empty"
         fi
-        if [[ "$key" == "assert" ]]; then
-            assert=$value
-            if [[ ! $assert =~ ^-?[0-9]+$ ]]; then
-                echo >&2 "ERROR: Option --assert does not specify an integer: $assert"
+        if [[ "${key}" == "assert" ]]; then
+            assert=${value}
+            if [[ ! ${assert} =~ ^-?[0-9]+$ ]]; then
+                echo >&2 "ERROR: Option --assert does not specify an integer: ${assert}"
                 exit 2
-            elif [[ $assert -lt 1 ]] || [[ $assert -gt 4 ]]; then
-                echo >&2 "ERROR: Option --assert is out of range [1,4]: $assert"
+            elif [[ ${assert} -lt 1 ]] || [[ ${assert} -gt 4 ]]; then
+                echo >&2 "ERROR: Option --assert is out of range [1,4]: ${assert}"
                 exit 2
             fi
         else
@@ -225,10 +225,10 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ -n $assert ]]; then
+if [[ -n ${assert} ]]; then
     validate_cpu_flags
     version=$(report_cpu_version)
-    if [[ $version < $assert ]]; then
+    if [[ ${version} < ${assert} ]]; then
         read_input
         cpu_info=$(get_cpu_name)
         [[ -n ${cpu_info} ]] && cpu_info=" [${cpu_info}]"
