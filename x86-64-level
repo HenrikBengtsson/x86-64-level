@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1
+#' Version: 0.2.1-9001
 #' License: CC BY-SA 4.0
 #' Source: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -89,7 +89,7 @@ read_input() {
 get_cpu_name() {
     local name
     bfr=$(grep -E "^model name[[:space:]]*:" <<< "${data}")
-    name=$(echo "$bfr" | head -1)
+    name=$(echo "$bfr" | head -n 1)
     name="${name#model name*:}"
     echo "${name## }"
 }
