@@ -1,0 +1,24 @@
+on: [push, pull_request]
+
+name: "unit tests"
+
+jobs:
+  checks:
+    if: "! contains(github.event.head_commit.message, '[ci skip]')"
+
+    timeout-minutes: 2
+
+    runs-on: ubuntu-22.04
+    
+    name: "unit tests"
+
+    strategy:
+      fail-fast: false
+
+    steps:
+    - name: Checkout git repository
+      uses: actions/checkout@v3
+
+    - name: Run unit tests
+      run: |
+        PATH=.:$PATH tests/x86-64-level.sh

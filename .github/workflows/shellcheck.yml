@@ -32,3 +32,4 @@ jobs:
     - name: ShellCheck
       run: |
         ./shellcheck -- x86-64-level
+        ./shellcheck -- tests/x86-64-level.sh
