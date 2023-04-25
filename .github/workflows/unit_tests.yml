@@ -1,6 +1,6 @@
 on: [push, pull_request]
 
-name: "unit tests"
+name: unit_tests
 
 jobs:
   checks:
@@ -10,7 +10,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     
-    name: "unit tests"
+    name: unit_tests
 
     strategy:
       fail-fast: false
