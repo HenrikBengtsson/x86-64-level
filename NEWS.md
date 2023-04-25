@@ -12,6 +12,10 @@
    `merror: command not found` and not the intended `ERROR: Option
    '--assert' must not be empty`.
 
+## Miscellaneous
+
+ * Add unit tests.
+
 
 # Version 0.2.1 [2023-01-18]
 
