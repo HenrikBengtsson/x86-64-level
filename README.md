@@ -1,4 +1,5 @@
 [![shellcheck](https://github.com/HenrikBengtsson/x86-64-level/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/HenrikBengtsson/x86-64-level/actions/workflows/shellcheck.yml)
+[![unit_tests](https://github.com/HenrikBengtsson/x86-64-level/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/HenrikBengtsson/x86-64-level/actions/workflows/unit_tests.yml)
 
 # x86-64-level - Get the x86-64 Microarchitecture Level on the Current Machine
 
