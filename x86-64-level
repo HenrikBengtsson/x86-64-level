@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1-9002
+#' Version: 0.2.1-9003
 #' License: CC BY-SA 4.0
 #' Source: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -126,7 +126,7 @@ has_cpu_flags() {
                 :
                 ;;
             *)
-                if "${verbose}"; then
+                if ${verbose}; then
                     msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
                     cpu_name=$(get_cpu_name)
                     [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
@@ -228,7 +228,7 @@ done
 if [[ -n ${assert} ]]; then
     validate_cpu_flags
     version=$(report_cpu_version)
-    if [[ ${version} < ${assert} ]]; then
+    if [[ ${version} -lt ${assert} ]]; then
         read_input
         cpu_info=$(get_cpu_name)
         [[ -n ${cpu_info} ]] && cpu_info=" [${cpu_info}]"
