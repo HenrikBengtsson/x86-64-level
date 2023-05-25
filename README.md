@@ -3,7 +3,7 @@
 
 # x86-64-level - Get the x86-64 Microarchitecture Level on the Current Machine
 
-TL;DR: The `x86-64-level` tool identifies the current CPU supports
+TL;DR: The `x86-64-level` tool identifies if the current CPU supports
 x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4, e.g.
 
 ```sh
@@ -15,7 +15,7 @@ $ x86-64-level
 # Background
 
 **x86-64** is a 64-bit version of the x86 CPU instruction set
-supported by AMD and Intel CPUs among others.  Since the first
+supported by AMD and Intel CPUs, among others.  Since the first
 generations of CPUs, more low-level CPU features have been added over
 the years.  The x86-64 CPU features can be grouped into four [CPU
 microarchitecture levels]:
@@ -53,9 +53,9 @@ Illegal instruction (core dumped)
 ```
 
 This is because the older CPU does not understand one of the CPU
-instructions ("operands").  Note that the software might not crash each
-time.  It will only do so if it reach the part of the code that uses
-a too new CPU instruction.
+instructions ("operands").  Note that the software might not crash
+each time.  It will only do so if it reaches the part of the code that
+uses a CPU instruction that is not recognized by the current CPU.
 
 In contrast, if we compile the software towards the older x86-64-v3
 machine, the produced binary will only use x86-64-v3 instructions and
@@ -73,8 +73,8 @@ illegal operation' problem.
 
 ## Finding CPU's x86-64 level
 
-This tool, `x86-64-level`, allows you to query the which x86-64 level
-the CPU on current machine supports.  For example,
+This tool, `x86-64-level`, allows you to query which x86-64 level the
+CPU on current machine supports.  For example,
 
 ```sh
 $ x86-64-level
@@ -89,7 +89,8 @@ $ echo "x86-64-v${level}"
 x86-64-v3
 ```
 
-If you want to know an "explanation", specify option `--verbose`, e.g.
+If you want to get an explanation for the identified level, specify
+option `--verbose`, e.g.
 
 ```sh
 $ x86-64-level --verbose
@@ -131,7 +132,7 @@ x86-64-level --assert=4 || exit 1
 
 This will output that error message (to the standard error) and exit
 the script with exit code 1, if, and only if, the current machine does
-not support x86-64-v4. In all other cases, it continue silently.
+not support x86-64-v4. In all other cases, it continues silently.
 
 
 
