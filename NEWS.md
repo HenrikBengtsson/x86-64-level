@@ -1,3 +1,22 @@
+# Version 0.2.2 [2023-05-25]
+
+## New Features
+
+ * Now `x86-64-level` asserts that the input CPU flags are of the
+   correct format, which is assumed to be only lower-case letters,
+   digits, and underscores.
+
+## Bug Fixes
+
+ * Calling `x86-64-level --assert=""` would produce error message
+   `merror: command not found` and not the intended `ERROR: Option
+   '--assert' must not be empty`.
+
+## Miscellaneous
+
+ * Add unit tests.
+
+
 # Version 0.2.1 [2023-01-18]
 
  * Now `--assert` reports also on the CPU name.

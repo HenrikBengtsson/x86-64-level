@@ -6,7 +6,7 @@
 #' i.e. x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4.
 #'
 #' Usage:
-#' x86-64-version
+#' x86-64-level
 #'
 #' Options:
 #'   --help            Show this help
@@ -41,9 +41,9 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1
+#' Version: 0.2.2
 #' License: CC BY-SA 4.0
-#' Source: https://github.com/ucsf-wynton/wynton-tools
+#' Source code: https://github.com/ucsf-wynton/wynton-tools
 #'
 #' Authors:
 #' * Henrik Bengtsson (expanded on Gilles implementation [2])
@@ -73,21 +73,23 @@ version() {
 #---------------------------------------------------------------------
 data=
 read_input() {
-    if $stdin; then
-        data=$(< /dev/stdin)
-    else
-        data=$(< /proc/cpuinfo)
-    fi
     if [[ -z ${data} ]]; then
-        echo >&2 "ERROR: Input data is empty"
-        exit 1
+        if ${stdin}; then
+            data=$(< /dev/stdin)
+        else
+            data=$(< /proc/cpuinfo)
+        fi
+        if [[ -z ${data} ]]; then
+            echo >&2 "ERROR: Input data is empty"
+            exit 1
+        fi
     fi
 }
 
 get_cpu_name() {
     local name
     bfr=$(grep -E "^model name[[:space:]]*:" <<< "${data}")
-    name=$(echo "$bfr" | head -1)
+    name=$(echo "${bfr}" | head -n 1)
     name="${name#model name*:}"
     echo "${name## }"
 }
@@ -97,7 +99,18 @@ get_cpu_flags() {
     local flags
     flags=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
     flags="${flags#*:}"
-    echo "${flags## }"
+    flags="${flags## }"
+    if grep -v -q -E "^[[:lower:][:digit:]_ ]+$" <<< "${flags}"; then
+        echo >&2 "ERROR: Cannot reliably infer the CPU x86-64 level, because the format of the CPU flags comprise of other symbols than only lower-case letters, digits, and underscores: '${flags}'"
+        exit 1
+    fi
+    echo "${flags}"
+}
+
+
+validate_cpu_flags() {
+    read_input
+    get_cpu_flags > /dev/null
 }
 
 
@@ -109,12 +122,12 @@ has_cpu_flags() {
     for flag; do
         ## Note, it's important to keep a trailing space
         case " ${flags} " in
-            *" $flag "*)
+            *" ${flag} "*)
                 :
                 ;;
             *)
-                if "$verbose"; then
-                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '$flag', which is not supported by this CPU"
+                if ${verbose}; then
+                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
                     cpu_name=$(get_cpu_name)
                     [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
                     echo >&2 "${msg}"
@@ -158,7 +171,7 @@ report_cpu_version() {
         exit 1
     fi
     determine_cpu_version
-    echo "$level"
+    echo "${level}"
 }
 
 
@@ -189,16 +202,17 @@ while [[ $# -gt 0 ]]; do
         key=${1//--}
         key=${key//=*}
         value=${1//--[[:alpha:]]*=}
-        if [[ -z $value ]]; then
-            merror "Option '--$key' must not be empty"
+        if [[ -z ${value} ]]; then
+            echo >&2 "ERROR: Option '--${key}' must not be empty"
+            exit 2
         fi
-        if [[ "$key" == "assert" ]]; then
-            assert=$value
-            if [[ ! $assert =~ ^-?[0-9]+$ ]]; then
-                echo >&2 "ERROR: Option --assert does not specify an integer: $assert"
+        if [[ "${key}" == "assert" ]]; then
+            assert=${value}
+            if [[ ! ${assert} =~ ^-?[0-9]+$ ]]; then
+                echo >&2 "ERROR: Option --assert does not specify an integer: ${assert}"
                 exit 2
-            elif [[ $assert -lt 1 ]] || [[ $assert -gt 4 ]]; then
-                echo >&2 "ERROR: Option --assert is out of range [1,4]: $assert"
+            elif [[ ${assert} -lt 1 ]] || [[ ${assert} -gt 4 ]]; then
+                echo >&2 "ERROR: Option --assert is out of range [1,4]: ${assert}"
                 exit 2
             fi
         else
@@ -212,9 +226,10 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ -n $assert ]]; then
+if [[ -n ${assert} ]]; then
+    validate_cpu_flags
     version=$(report_cpu_version)
-    if [[ $version < $assert ]]; then
+    if [[ ${version} -lt ${assert} ]]; then
         read_input
         cpu_info=$(get_cpu_name)
         [[ -n ${cpu_info} ]] && cpu_info=" [${cpu_info}]"
@@ -222,5 +237,6 @@ if [[ -n $assert ]]; then
         exit 1
     fi
 else
+    validate_cpu_flags
     report_cpu_version
 fi
