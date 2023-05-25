@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.1-9006
+#' Version: 0.2.2
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/ucsf-wynton/wynton-tools
 #'
