@@ -155,6 +155,12 @@ $ ./x86-64-level --version
 $ ./x86-64-level
 ```
 
+Alternative, you may be able to install `x86-64-level` as a package
+for your Linux distribution:
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/x86-64-level.svg)](https://repology.org/project/x86-64-level/versions)
+
+
 ## License
 
 The content of this repository is released under the [CC BY-SA 4.0]
