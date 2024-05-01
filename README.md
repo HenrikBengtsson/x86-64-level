@@ -169,6 +169,7 @@ license.
 
 ## Authors
 
+* Stefan Tauner (POSIX version)
 * Henrik Bengtsson (expanded on [Gilles' implementation])
 * StackExchange user [Gilles]
 * StackExchange user [gioele]

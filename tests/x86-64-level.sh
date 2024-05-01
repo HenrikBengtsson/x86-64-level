@@ -167,12 +167,12 @@ for truth in $(seq 0 "$((${#cpu_flags[@]} - 1))"); do
         >&2 echo "ERROR: Exit code is non-zero: ${exit_code}"
         nerrors=$((nerrors + 1))
     fi
-    
+
     if [[ "${level}" -ne "${truth}" ]]; then
         >&2 echo "ERROR: Unexpected level: ${level} != ${truth}"
         nerrors=$((nerrors + 1))
-    fi    
-    
+    fi
+
     ## Outputs nothing to stderr
     stderr=$( { >&2 x86-64-level <<< "flags: ${flags}" > /dev/null; } 2>&1 )
     if [[ -n ${stderr} ]]; then
@@ -196,22 +196,22 @@ for level in -1 0 5 100; do
         >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
         nerrors=$((nerrors + 1))
     fi
-    
+
     if [[ -z ${stderr} ]]; then
         >&2 echo "ERROR: No error message: '${stderr}'"
         nerrors=$((nerrors + 1))
-    fi    
-    
+    fi
+
     if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
         >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
         nerrors=$((nerrors + 1))
     fi
-    
+
     if ! grep -q -E "^ERROR: .*out of range.* ${level}" <<< "${stderr}"; then
         >&2 echo "ERROR: Unexpected error message: '${stderr}'"
         nerrors=$((nerrors + 1))
-    fi    
-    
+    fi
+
     ## Outputs nothing to stdout
     stdout=$(x86-64-level --assert="${level}" 2> /dev/null)
     if [[ -n ${stdout} ]]; then
@@ -230,22 +230,22 @@ for level in 1.2 world; do
         >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
         nerrors=$((nerrors + 1))
     fi
-    
+
     if [[ -z ${stderr} ]]; then
         >&2 echo "ERROR: No error message: '${stderr}'"
         nerrors=$((nerrors + 1))
-    fi    
+    fi
 
     if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
         >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
         nerrors=$((nerrors + 1))
-    fi    
+    fi
 
     if ! grep -q -E "^ERROR: .*does not specify an integer.* ${level}" <<< "${stderr}"; then
         >&2 echo "ERROR: Unexpected error message: '${stderr}'"
         nerrors=$((nerrors + 1))
-    fi    
-    
+    fi
+
     ## Outputs nothing to stdout
     stdout=$(x86-64-level --assert="${level}" 2> /dev/null)
     if [[ -n ${stdout} ]]; then
@@ -268,17 +268,17 @@ fi
 if [[ -z ${stderr} ]]; then
     >&2 echo "ERROR: No error message: '${stderr}'"
     nerrors=$((nerrors + 1))
-fi    
+fi
 
 if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
     >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
     nerrors=$((nerrors + 1))
-fi    
+fi
 
 if ! grep -q -E "^ERROR: .*must not be empty" <<< "${stderr}"; then
     >&2 echo "ERROR: Unexpected error message: '${stderr}'"
     nerrors=$((nerrors + 1))
-fi    
+fi
 
 ## Outputs nothing to stdout
 stdout=$(x86-64-level --assert="" 2> /dev/null)
@@ -299,17 +299,17 @@ fi
 if [[ -z ${stderr} ]]; then
     >&2 echo "ERROR: No error message: '${stderr}'"
     nerrors=$((nerrors + 1))
-fi    
+fi
 
 if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
     >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
     nerrors=$((nerrors + 1))
-fi    
+fi
 
 if ! grep -q -E "^ERROR: .*Input data is empty" <<< "${stderr}"; then
     >&2 echo "ERROR: Unexpected error message: '${stderr}'"
     nerrors=$((nerrors + 1))
-fi    
+fi
 
 ## Outputs nothing to stdout
 stdout=$( x86-64-level - <<< '' 2> /dev/null )
@@ -319,36 +319,37 @@ if [[ -n ${stdout} ]]; then
 fi
 
 
-echo "* x86-64-level - <<< 'flags: AVX' (exception)"
-stderr=$(x86-64-level - <<< 'flags: AVX' 2>&1)
-exit_code=$?
-if [[ ${exit_code} -eq 0 ]]; then
-    >&2 echo "ERROR: Exit code is not non-zero: ${exit_code}"
-    nerrors=$((nerrors + 1))
-fi
+for flags in "AVX2" "avx@"; do
+    echo "* x86-64-level - <<< 'flags: ${flags}' (exception)"
+    stderr=$(x86-64-level - <<< "flags: ${flags}" 2>&1)
+    exit_code=$?
+    if [[ ${exit_code} -eq 0 ]]; then
+        >&2 echo "ERROR: Exit code is not non-zero: ${exit_code}"
+        nerrors=$((nerrors + 1))
+    fi
 
-if [[ -z ${stderr} ]]; then
-    >&2 echo "ERROR: No error message: '${stderr}'"
-    nerrors=$((nerrors + 1))
-fi    
+    if [[ -z ${stderr} ]]; then
+        >&2 echo "ERROR: No error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
 
-if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
-    >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
-    nerrors=$((nerrors + 1))
-fi    
+    if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
+        >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
 
-if ! grep -q -E "^ERROR: .*format of the CPU flags" <<< "${stderr}"; then
-    >&2 echo "ERROR: Unexpected error message: '${stderr}'"
-    nerrors=$((nerrors + 1))
-fi    
+    if ! grep -q -E "^ERROR: .*format of the CPU flags" <<< "${stderr}"; then
+        >&2 echo "ERROR: Unexpected error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
 
-## Outputs nothing to stdout
-stdout=$( x86-64-level - <<< 'flags: AVX' 2> /dev/null )
-if [[ -n ${stdout} ]]; then
-    >&2 echo "ERROR: Detected output to standard output: ${stdout}"
-    nerrors=$((nerrors + 1))
-fi
-
+    ## Outputs nothing to stdout
+    stdout=$( x86-64-level - <<< 'flags: AVX' 2> /dev/null )
+    if [[ -n ${stdout} ]]; then
+        >&2 echo "ERROR: Detected output to standard output: ${stdout}"
+        nerrors=$((nerrors + 1))
+    fi
+done
 
 
 #--------------------------------------------------------------------------
