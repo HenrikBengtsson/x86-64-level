@@ -77,7 +77,15 @@ read_input() {
         if ${stdin}; then
             data=$(< /dev/stdin)
         else
-            data=$(< /proc/cpuinfo)
+            if [ -r /proc/cpuinfo ]; then
+                data=$(< /proc/cpuinfo)
+            elif [ -r /var/run/dmesg.boot ]; then
+                # FreeBSD
+                data=$(< /var/run/dmesg.boot)
+            else
+                echo >&2 "ERROR: Unsupported system"
+                exit 1
+            fi
         fi
         if [[ -z ${data} ]]; then
             echo >&2 "ERROR: Input data is empty"
@@ -98,8 +106,22 @@ get_cpu_name() {
 get_cpu_flags() {
     local flags
     flags=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
-    flags="${flags#*:}"
-    flags="${flags## }"
+    if [ -z "${flags}" ]; then
+        # FreeBSD
+        flags=$(grep "Features.*=" <<< "${data}" | sort | uniq | cut -d '<' -f 2 | cut -d '>' -f 1)
+        flags=$(paste -s -d ',' - <<< "${flags}")
+        flags=$(echo "${flags//MMX+/mmxext}")
+        flags=$(echo "${flags//3DNow!+/3dnowext}")
+        flags=$(echo "${flags//3DNow!/3dnow}")
+        flags=$(echo "${flags//MMX+/mmxext}")
+        flags=$(echo "${flags//LAHF/lahf_lm}")
+        flags=$(echo "${flags//./_}")
+        flags=$(echo "${flags//,/ }")
+        flags=$(echo "${flags@L}")
+    else
+        flags="${flags#*:}"
+        flags="${flags## }"
+    fi
     if grep -v -q -E "^[[:lower:][:digit:]_ ]+$" <<< "${flags}"; then
         echo >&2 "ERROR: Cannot reliably infer the CPU x86-64 level, because the format of the CPU flags comprise of other symbols than only lower-case letters, digits, and underscores: '${flags}'"
         exit 1
