@@ -12,7 +12,7 @@ $ x86-64-level
 ```
 
 
-# Background
+## Background
 
 **x86-64** is a 64-bit version of the x86 CPU instruction set
 supported by AMD and Intel CPUs, among others.  Since the first
@@ -41,14 +41,14 @@ older machine with a CPU that only supports, say, x86-64-v3.  If we
 attempt to run the software on the older machine, it will crash and we
 might get something like:
 
-```
+```txt
  *** caught illegal operation ***
 address 0x2b3a8b234ccd, cause 'illegal operand'
 ```
 
 or
 
-```
+```txt
 Illegal instruction (core dumped)
 ```
 
@@ -61,7 +61,7 @@ In contrast, if we compile the software towards the older x86-64-v3
 machine, the produced binary will only use x86-64-v3 instructions and
 will therefore also run on the newer x86-64-v4 machine.
 
-Tips: If you work on a high-performance compute (HPC) environment with
+Tip: If you work on a high-performance compute (HPC) environment with
 compute nodes of different generations of CPUs, and you want a smooth
 ride, compile your software tools to use the oldest x86-64 level.
 This won't make best use of the more modern CPUs, but the software
@@ -69,9 +69,9 @@ will run on all compute nodes and you won't run into the 'caught
 illegal operation' problem.
 
 
-# Usage
+## Usage
 
-## Finding CPU's x86-64 level
+### Finding CPU's x86-64 level
 
 This tool, `x86-64-level`, allows you to query which x86-64 level the
 CPU on the current machine supports.  For example,
@@ -100,7 +100,7 @@ is not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
 ```
 
 
-## Querying another machine
+### Querying another machine
 
 By default, `x86-64-level` reads `/proc/cpuinfo` on the current
 machine.  If you specify `-`, it reads the CPU information from the
@@ -117,7 +117,7 @@ if you collect `/proc/cpuinfo` from the compute nodes of an HPC
 cluster and identify their levels afterward.
 
 
-## Assert minimum x86-64 level
+### Assert minimum x86-64 level
 
 To test if the CPU supports a minimum level of x86-64, use the
 `--assert=<level>` option.  For example,
