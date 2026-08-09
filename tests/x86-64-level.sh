@@ -194,7 +194,13 @@ for truth in $(seq 0 "$((${#cpu_flags[@]} - 1))"); do
         nerrors=$((nerrors + 1))
     fi
 
-    if ! grep -q -E "^Identified x86-64-v${truth}," <<< "${stderr}"; then
+    ## Level 0 means no x86-64 support, i.e. there is no 'x86-64-v0'
+    if [[ ${truth} -eq 0 ]]; then
+        label="no x86-64 level"
+    else
+        label="x86-64-v${truth}"
+    fi
+    if ! grep -q -F "Identified ${label}," <<< "${stderr}"; then
         >&2 echo "ERROR: Unexpected explanation: '${stderr}'"
         nerrors=$((nerrors + 1))
     fi

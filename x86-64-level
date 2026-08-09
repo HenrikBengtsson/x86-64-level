@@ -43,7 +43,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9012
+#' Version: 0.2.2-9013
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -141,6 +141,18 @@ explain() {
 }
 
 
+## The identified level, as reported to the user.  Level 0 means that
+## the CPU does not support x86-64 at all, i.e. there is no such thing
+## as an 'x86-64-v0' level
+level_label() {
+    if [[ $1 -eq 0 ]]; then
+        echo "no x86-64 level"
+    else
+        echo "x86-64-v$1"
+    fi
+}
+
+
 has_cpu_flags() {
     local flag
 
@@ -152,7 +164,7 @@ has_cpu_flags() {
                 ;;
             *)
                 if ${verbose}; then
-                    explain "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
+                    explain "Identified $(level_label "${level}"), because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
                 fi
                 return 1
                 ;;
@@ -162,7 +174,7 @@ has_cpu_flags() {
 
 
 determine_cpu_version() {
-    ## x86-64-v0 (can this happen?)
+    ## No x86-64 support at all, e.g. an i386 or i686 CPU
     level=0
 
     ## x86-64-v1
@@ -251,7 +263,7 @@ if [[ -n ${assert} ]]; then
         read_input
         cpu_info=$(get_cpu_name)
         [[ -n ${cpu_info} ]] && cpu_info=" [${cpu_info}]"
-        >&2 echo "The CPU${cpu_info} on this host ('${HOSTNAME}') supports x86-64-v${version}, which is less than the required x86-64-v${assert}"
+        >&2 echo "The CPU${cpu_info} on this host ('${HOSTNAME}') supports $(level_label "${version}"), which is less than the required x86-64-v${assert}"
         exit 1
     fi
 else

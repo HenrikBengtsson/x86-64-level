@@ -5,6 +5,10 @@
  * Now `x86-64-level` gives an informative error, if there is no
    `/proc/cpuinfo` file.
 
+ * Now `--verbose` and `--assert=<level>` report "no x86-64 level",
+   when the CPU does not support x86-64 at all, e.g. an i686 CPU.
+   Previously, they reported the non-existing level "x86-64-v0".
+
 ## Bug Fixes
 
  * Calling `x86-64-level` with a misspelled option, e.g.
