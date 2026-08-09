@@ -153,6 +153,47 @@ the script with exit code 1, if, and only if, the current machine does
 not support x86-64-v4. In all other cases, it continues silently.
 
 
+## Frequently asked questions
+
+### Why is the reported level lower than expected?
+
+The level is inferred from the CPU flags that the operating system
+reports in `/proc/cpuinfo`, and not from what the silicon can do.  If
+the vendor or the firmware disables a feature, the flag is not
+reported, and the level drops accordingly.  For example, the 12th
+generation Intel Core CPUs do have AVX-512 on their Performance-cores
+(P-cores), but it is disabled, because their Efficient-cores (E-cores)
+do not implement it.  Such a CPU reports x86-64-v3, whereas an 11th
+generation CPU with AVX-512 enabled reports x86-64-v4.
+
+To see which CPU flags are missing for the next level, use
+`--verbose`, e.g.
+
+```sh
+$ x86-64-level --verbose
+Identified x86-64-v3, because x86-64-v4 requires 'avx512f', 'avx512bw',
+'avx512cd', 'avx512dq', and 'avx512vl', which are not supported by this
+CPU [12th Gen Intel(R) Core(TM) i5-12600K]
+3
+```
+
+
+### Why is there no level for a CPU that has AVX, but not AVX2?
+
+The four x86-64 levels are not defined by this tool. They are defined
+by the [x86-64 psABI], which is what the GNU Compiler Collection
+(GCC), Clang, and glibc implement, e.g. `gcc -march=x86-64-v3`.  A CPU
+with AVX, but without AVX2, is x86-64-v2, because x86-64-v3 requires
+also BMI2 and FMA, among others.
+
+
+### Does it work on macOS, or on an arm64 machine?
+
+No.  The tool needs `/proc/cpuinfo`, which exists only on Linux, and
+only x86-64 CPUs report the `flags` entry that it parses.  You can
+still use such a machine to query a Linux x86-64 machine; see
+'Querying another machine' above.
+
 
 ## Installation
 
@@ -192,7 +233,14 @@ license, which is also available in the [LICENSE] file.
 * StackExchange user [gioele]
 
 
+Parts of the FAQ section and some of the unit tests have been written
+or revised with the help of artificial intelligence (Claude Opus
+5). Any such contribution has carefully been reviewed by the
+maintainer before it was committed.
+
+
 [CPU microarchitecture levels]: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+[x86-64 psABI]: https://gitlab.com/x86-psABIs/x86-64-ABI
 [Gilles' implementation]: https://unix.stackexchange.com/a/631320
 [Gilles]: https://stackexchange.com/users/164368/
 [gioele]: https://unix.stackexchange.com/users/14861/
