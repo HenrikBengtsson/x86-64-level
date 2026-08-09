@@ -14,6 +14,9 @@
    there was no `flags` entry at all.  Also, an empty `flags` entry
    would silently give level 0.
 
+ * An error on invalid input would report on the error but not always
+   terminate.
+
 ## Miscellaneous
 
  * Remove stray `--assert` flag, which had no effect. Note that

@@ -418,6 +418,47 @@ if [[ -n ${stdout} ]]; then
 fi
 
 
+# x86-64-level --assert=<level> - <<< <invalid input>
+inputs=("model name: Fake CPU" "flags:" "flags: AVX")
+for input in "${inputs[@]}"; do
+    echo "* x86-64-level --assert=1 - <<< '${input}' (exception)"
+    stderr=$(x86-64-level --assert=1 - <<< "${input}" 2>&1)
+    exit_code=$?
+    if [[ ${exit_code} -eq 0 ]]; then
+        >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if [[ -z ${stderr} ]]; then
+        >&2 echo "ERROR: No error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Reports on the invalid input, and not on a failed assertion
+    if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
+        >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if grep -q -F "which is less than the required" <<< "${stderr}"; then
+        >&2 echo "ERROR: Reports on a failed assertion, and not on the invalid input: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Reports the error once, i.e. does not continue after the failure
+    if [[ $(wc -l <<< "${stderr}") -ne 1 ]]; then
+        >&2 echo "ERROR: Expected a single error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Outputs nothing to stdout
+    stdout=$(x86-64-level --assert=1 - <<< "${input}" 2> /dev/null)
+    if [[ -n ${stdout} ]]; then
+        >&2 echo "ERROR: Detected output to standard output: ${stdout}"
+        nerrors=$((nerrors + 1))
+    fi
+done
+
 
 #--------------------------------------------------------------------------
 # Summary

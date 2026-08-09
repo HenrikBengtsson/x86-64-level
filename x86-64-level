@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9007
+#' Version: 0.2.2-9008
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -172,7 +172,7 @@ determine_cpu_version() {
 
 report_cpu_version() {
     read_input
-    flags=$(get_cpu_flags)
+    flags=$(get_cpu_flags) || exit $?
     determine_cpu_version
     echo "${level}"
 }
@@ -229,7 +229,7 @@ done
 
 if [[ -n ${assert} ]]; then
     validate_cpu_flags
-    version=$(report_cpu_version)
+    version=$(report_cpu_version) || exit $?
     if [[ ${version} -lt ${assert} ]]; then
         read_input
         cpu_info=$(get_cpu_name)
