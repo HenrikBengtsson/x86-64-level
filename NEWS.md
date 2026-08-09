@@ -5,6 +5,11 @@
  * Now `x86-64-level` gives an informative error, if there is no
    `/proc/cpuinfo` file.
 
+ * Now `x86-64-level` warns, if no x86-64 support is identified,
+   although the operating system is 64-bit.  Then the CPU flags
+   reported in `/proc/cpuinfo` are incomplete, which can happen in a
+   virtual machine.
+
  * Now `--verbose` reports on all CPU flags that are missing for the
    next x86-64 level, and not only the first one found.
 

@@ -45,7 +45,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9014
+#' Version: 0.2.2-9015
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -75,6 +75,10 @@ version() {
 #---------------------------------------------------------------------
 # CPU functions
 #---------------------------------------------------------------------
+## The file holding the CPU information.  The environment variable is
+## used for testing only, and is not part of the public interface
+cpuinfo=${X86_64_LEVEL_CPUINFO:-/proc/cpuinfo}
+
 ## The CPU information read, the CPU flags parsed from it, and the
 ## x86-64 level inferred from those flags
 data=
@@ -86,11 +90,11 @@ read_input() {
         if ${stdin}; then
             data=$(< /dev/stdin)
         else
-            if [[ ! -f /proc/cpuinfo ]]; then
-                echo >&2 "ERROR: No such file: /proc/cpuinfo (this tool requires Linux)"
+            if [[ ! -f ${cpuinfo} ]]; then
+                echo >&2 "ERROR: No such file: ${cpuinfo} (this tool requires Linux)"
                 exit 1
             fi
-            data=$(< /proc/cpuinfo)
+            data=$(< "${cpuinfo}")
         fi
         if [[ -z ${data} ]]; then
             echo >&2 "ERROR: Input data is empty"
@@ -240,10 +244,28 @@ determine_cpu_version() {
 }
 
 
+## Warns if no x86-64 support was identified, although the operating
+## system is 64-bit.  Then the CPU flags reported in /proc/cpuinfo must
+## be incomplete, which can happen in a virtual machine.  This applies
+## only to the current machine, i.e. not when reading from the standard
+## input
+warn_if_64bit_os() {
+    local machine
+
+    ${stdin} && return 0
+    [[ ${level} -ne 0 ]] && return 0
+    machine=$(uname -m 2> /dev/null)
+    [[ ${machine} == "x86_64" ]] || return 0
+
+    echo >&2 "WARNING: The CPU flags in ${cpuinfo} indicate no x86-64 support, although this machine runs a 64-bit operating system ('uname -m' reports '${machine}'), i.e. the reported CPU flags are incomplete, which can happen in a virtual machine"
+}
+
+
 report_cpu_version() {
     read_input
     flags=$(get_cpu_flags) || exit $?
     determine_cpu_version
+    warn_if_64bit_os
     echo "${level}"
 }
 

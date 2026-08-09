@@ -231,6 +231,84 @@ fi
 
 
 #--------------------------------------------------------------------------
+# x86-64-level reading the CPU information from a file
+#
+# Note, environment variable 'X86_64_LEVEL_CPUINFO' is for testing only
+#--------------------------------------------------------------------------
+cpuinfo=$(mktemp)
+
+## A 64-bit CPU where the operating system reports incomplete CPU
+## flags, i.e. neither 'lm' nor 'syscall', which happens on some
+## virtual machines
+cat > "${cpuinfo}" <<EOF
+model name	: Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht hypervisor pni ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c lahf_lm bmi1 avx2 bmi2
+EOF
+
+if [[ $(uname -m) == "x86_64" ]]; then
+    echo "* x86-64-level (64-bit OS, but incomplete CPU flags)"
+    level=$(X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level 2> /dev/null)
+    if [[ "${level}" -ne 0 ]]; then
+        >&2 echo "ERROR: Unexpected level: ${level} != 0"
+        nerrors=$((nerrors + 1))
+    fi
+
+    stderr=$( { X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level > /dev/null; } 2>&1 )
+    if ! grep -q -E "^WARNING: .*64-bit operating system" <<< "${stderr}"; then
+        >&2 echo "ERROR: Does not warn on incomplete CPU flags: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## No warning when the CPU information is read from another machine
+    stderr=$( { x86-64-level - < "${cpuinfo}" > /dev/null; } 2>&1 )
+    if [[ -n ${stderr} ]]; then
+        >&2 echo "ERROR: Detected output to standard error: ${stderr}"
+        nerrors=$((nerrors + 1))
+    fi
+fi
+
+## No warning when an x86-64 level is identified
+cat > "${cpuinfo}" <<EOF
+flags		: lm cmov cx8 fpu fxsr mmx syscall sse2
+EOF
+
+echo "* x86-64-level (complete CPU flags)"
+level=$(X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level 2> /dev/null)
+if [[ "${level}" -ne 1 ]]; then
+    >&2 echo "ERROR: Unexpected level: ${level} != 1"
+    nerrors=$((nerrors + 1))
+fi
+
+stderr=$( { X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level > /dev/null; } 2>&1 )
+if [[ -n ${stderr} ]]; then
+    >&2 echo "ERROR: Detected output to standard error: ${stderr}"
+    nerrors=$((nerrors + 1))
+fi
+
+rm -f "${cpuinfo}"
+
+
+# x86-64-level with a non-existing CPU information file
+echo "* x86-64-level (no such CPU information file) (exception)"
+stderr=$(X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level 2>&1)
+exit_code=$?
+if [[ ${exit_code} -eq 0 ]]; then
+    >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
+    nerrors=$((nerrors + 1))
+fi
+
+if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR: No such file:"; then
+    >&2 echo "ERROR: Unexpected error message: '${stderr}'"
+    nerrors=$((nerrors + 1))
+fi
+
+if [[ $(wc -l <<< "${stderr}") -ne 1 ]]; then
+    >&2 echo "ERROR: Expected a single error message: '${stderr}'"
+    nerrors=$((nerrors + 1))
+fi
+
+
+#--------------------------------------------------------------------------
 # Exceptions
 #--------------------------------------------------------------------------
 # x86-64-level --assert=<out of range>
