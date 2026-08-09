@@ -25,6 +25,8 @@
  * Remove stray `--assert` flag, which had no effect. Note that
    `--assert=<level>` remains.
 
+ * Add `LICENSE` file with the CC BY-SA 4.0 license text.
+
 
 # Version 0.2.2 [2023-05-25]
 
