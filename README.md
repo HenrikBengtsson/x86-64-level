@@ -33,7 +33,7 @@ x86-64-v2 ⊂ x86-64-v3 ⊂ x86-64-v4.  For a CPU to support a level, it
 must support _all_ CPU features of that version level, and, because
 they are subsets of each other, all those of the lower versions.
 
-Software can be written so that they use the most powerful set of CPU
+Software can be written so that it uses the most powerful set of CPU
 features available.  This optimization happens at compile time and
 allows the software to run more efficiently.  However, a software
 binary that was compiled towards the x86-64-v4 level cannot run on an
@@ -53,13 +53,13 @@ Illegal instruction (core dumped)
 ```
 
 This is because the older CPU does not understand one of the CPU
-instructions ("operands").  Note that the software might not crash
-each time.  It will only do so if it reaches the part of the code that
-uses a CPU instruction that is not recognized by the current CPU.
+instructions.  Note that the software might not crash each time.  It
+will only do so if it reaches the part of the code that uses a CPU
+instruction that is not recognized by the current CPU.
 
 In contrast, if we compile the software towards the older x86-64-v3
 machine, the produced binary will only use x86-64-v3 instructions and
-will therefor also run on the newer x86-64-v4 machine.
+will therefore also run on the newer x86-64-v4 machine.
 
 Tips: If you work on a high-performance compute (HPC) environment with
 compute nodes of different generations of CPUs, and you want a smooth
@@ -74,7 +74,7 @@ illegal operation' problem.
 ## Finding CPU's x86-64 level
 
 This tool, `x86-64-level`, allows you to query which x86-64 level the
-CPU on current machine supports.  For example,
+CPU on the current machine supports.  For example,
 
 ```sh
 $ x86-64-level
@@ -98,6 +98,23 @@ Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which
 is not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
 3
 ```
+
+
+## Querying another machine
+
+By default, `x86-64-level` reads `/proc/cpuinfo` on the current
+machine.  If you specify `-`, it reads the CPU information from the
+standard input instead, which means you can identify the level of a
+machine where the tool is not installed, e.g.
+
+```sh
+$ ssh server.example.org cat /proc/cpuinfo | x86-64-level -
+4
+```
+
+This works also on a saved copy of the CPU information, which is handy
+if you collect `/proc/cpuinfo` from the compute nodes of an HPC
+cluster and identify their levels afterward.
 
 
 ## Assert minimum x86-64 level
@@ -155,7 +172,7 @@ $ ./x86-64-level --version
 $ ./x86-64-level
 ```
 
-Alternative, you may be able to install `x86-64-level` as a package
+Alternatively, you may be able to install `x86-64-level` as a package
 for your Linux distribution:
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/x86-64-level.svg)](https://repology.org/project/x86-64-level/versions)
@@ -174,7 +191,7 @@ license.
 * StackExchange user [gioele]
 
 
-[CPU microarchitecture levels]: https://www.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+[CPU microarchitecture levels]: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
 [Gilles' implementation]: https://unix.stackexchange.com/a/631320
 [Gilles]: https://stackexchange.com/users/164368/
 [gioele]: https://unix.stackexchange.com/users/14861/
