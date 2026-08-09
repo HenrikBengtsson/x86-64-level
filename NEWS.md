@@ -1,5 +1,11 @@
 # Version (development version)
 
+## Bug Fixes
+
+ * Calling `x86-64-level` with a misspelled option, e.g.
+   `--ass--ert=2`, would be silently accepted as `--assert=2`, because
+   all `--` were dropped.
+
 ## Miscellaneous
 
  * Remove stray `--assert` flag, which had no effect. Note that

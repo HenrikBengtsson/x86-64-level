@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9002
+#' Version: 0.2.2-9004
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -113,6 +113,8 @@ validate_cpu_flags() {
     get_cpu_flags > /dev/null
 }
 
+
+flags=""
 
 has_cpu_flags() {
     local flag
@@ -197,8 +199,8 @@ while [[ $# -gt 0 ]]; do
         stdin=true
     ## Options (--key=value):
     elif [[ "$1" =~ ^--.*=.*$ ]]; then
-        key=${1//--}
-        key=${key//=*}
+        key=${1%%=*}
+        key=${key#--}
         value=${1//--[[:alpha:]]*=}
         if [[ -z ${value} ]]; then
             echo >&2 "ERROR: Option '--${key}' must not be empty"
