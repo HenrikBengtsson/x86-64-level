@@ -115,7 +115,7 @@ if [[ ${exit_code} -ne 0 ]]; then
 fi
 
 ## Outputs nothing to stdout
-stdout=$( x86-64-level --assert="${level}"> /dev/null )
+stdout=$(x86-64-level --assert="${level}")
 if [[ -n ${stdout} ]]; then
     >&2 echo "ERROR: Detected output to standard output: ${stdout}"
     nerrors=$((nerrors + 1))
@@ -134,7 +134,7 @@ if [[ ${exit_code} -ne 0 ]]; then
 fi
 
 ## Outputs nothing to stdout
-stdout=$( x86-64-level --assert="${level}"> /dev/null )
+stdout=$( x86-64-level --assert="${level}")
 if [[ -n ${stdout} ]]; then
     >&2 echo "ERROR: Detected output to standard output: ${stdout}"
     nerrors=$((nerrors + 1))
