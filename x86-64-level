@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9005
+#' Version: 0.2.2-9006
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -87,6 +87,7 @@ read_input() {
 }
 
 get_cpu_name() {
+    local bfr
     local name
     bfr=$(grep -E "^model name[[:space:]]*:" <<< "${data}")
     name=$(echo "${bfr}" | head -n 1)
