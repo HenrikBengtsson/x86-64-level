@@ -6,14 +6,16 @@
 #' i.e. x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4.
 #'
 #' Usage:
-#' x86-64-level
+#' x86-64-level [options] [-]
 #'
 #' Options:
 #'   --help            Show this help
 #'   --version         Show the version of this tool
 #'   --verbose         Explain the identified level
-#'   --assert=<level>  Assert that CPU supports x86-64-v<level> with
-#'                     exit code 0 is supported, otherwise 1
+#'   --assert=<level>  Assert that CPU supports x86-64-v<level>,
+#'                     exiting with code 0 if supported, otherwise 1
+#'   -                 Read the CPU information from the standard
+#'                     input, instead of from /proc/cpuinfo
 #'
 #' Examples:
 #' $ x86-64-level
@@ -41,19 +43,19 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9009
+#' Version: 0.2.2-9010
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
 #' Authors:
-#' * Henrik Bengtsson (expanded on Gilles implementation [2])
+#' * Henrik Bengtsson (expanded on Gilles' implementation [2])
 #' * StackExchange user 'Gilles'
 #'   <https://stackexchange.com/users/164368/>
 #' * StackExchange user 'gioele'
 #'   <https://unix.stackexchange.com/users/14861/>
 #'
 #' References:
-#' [1] https://www.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+#' [1] https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
 #' [2] https://unix.stackexchange.com/a/631320
 
 #---------------------------------------------------------------------
