@@ -2,6 +2,9 @@ on: [push, pull_request]
 
 name: shellcheck
 
+permissions:
+  contents: read
+
 jobs:
   checks:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
