@@ -1,5 +1,10 @@
 # Version (development version)
 
+## New Features
+
+ * Now `x86-64-level` gives an informative error, if there is no
+   `/proc/cpuinfo` file.
+
 ## Bug Fixes
 
  * Calling `x86-64-level` with a misspelled option, e.g.
@@ -24,8 +29,6 @@
 
  * Remove stray `--assert` flag, which had no effect. Note that
    `--assert=<level>` remains.
-
- * Add `LICENSE` file with the CC BY-SA 4.0 license text.
 
 
 # Version 0.2.2 [2023-05-25]

@@ -43,7 +43,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9011
+#' Version: 0.2.2-9012
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -84,6 +84,10 @@ read_input() {
         if ${stdin}; then
             data=$(< /dev/stdin)
         else
+            if [[ ! -f /proc/cpuinfo ]]; then
+                echo >&2 "ERROR: No such file: /proc/cpuinfo (this tool requires Linux)"
+                exit 1
+            fi
             data=$(< /proc/cpuinfo)
         fi
         if [[ -z ${data} ]]; then
