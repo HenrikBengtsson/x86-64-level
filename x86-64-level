@@ -45,7 +45,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9015
+#' Version: 0.3.0
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'

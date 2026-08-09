@@ -1,4 +1,4 @@
-# Version (development version)
+# Version 0.3.0 [2026-08-09]
 
 ## New Features
 
