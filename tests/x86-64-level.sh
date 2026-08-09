@@ -174,7 +174,7 @@ for truth in $(seq 0 "$((${#cpu_flags[@]} - 1))"); do
     fi    
     
     ## Outputs nothing to stderr
-    stderr=$( { >&2 x86-64-level <<< "flags: ${flags}" > /dev/null; } 2>&1 )
+    stderr=$( { >&2 x86-64-level - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
     if [[ -n ${stderr} ]]; then
         >&2 echo "ERROR: Detected output to standard error: ${stderr}"
         nerrors=$((nerrors + 1))
