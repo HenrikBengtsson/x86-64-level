@@ -17,6 +17,9 @@
  * An error on invalid input would report on the error but not always
    terminate.
 
+ * `--verbose` would not explain the identified level, when the CPU
+   supports the highest level, i.e. x86-64-v4.
+
 ## Miscellaneous
 
  * Remove stray `--assert` flag, which had no effect. Note that

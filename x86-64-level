@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9008
+#' Version: 0.2.2-9009
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -121,11 +121,20 @@ validate_cpu_flags() {
 
 flags=""
 
-has_cpu_flags() {
-    local flag
+## Reports on the identified level, with the CPU name, if known
+explain() {
     local msg
     local cpu_name
-    
+    msg=$1
+    cpu_name=$(get_cpu_name)
+    [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
+    echo >&2 "${msg}"
+}
+
+
+has_cpu_flags() {
+    local flag
+
     for flag; do
         ## Note, it's important to keep a trailing space
         case " ${flags} " in
@@ -134,10 +143,7 @@ has_cpu_flags() {
                 ;;
             *)
                 if ${verbose}; then
-                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
-                    cpu_name=$(get_cpu_name)
-                    [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
-                    echo >&2 "${msg}"
+                    explain "Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
                 fi
                 return 1
                 ;;
@@ -167,6 +173,10 @@ determine_cpu_version() {
     ## x86-64-v4
     has_cpu_flags avx512f avx512bw avx512cd avx512dq avx512vl || return 0
     level=4
+
+    if ${verbose}; then
+        explain "Identified x86-64-v${level}, which is the highest x86-64 level"
+    fi
 }
 
 
