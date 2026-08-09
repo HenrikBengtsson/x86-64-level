@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9004
+#' Version: 0.2.2-9005
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -201,7 +201,7 @@ while [[ $# -gt 0 ]]; do
     elif [[ "$1" =~ ^--.*=.*$ ]]; then
         key=${1%%=*}
         key=${key#--}
-        value=${1//--[[:alpha:]]*=}
+        value=${1#*=}
         if [[ -z ${value} ]]; then
             echo >&2 "ERROR: Option '--${key}' must not be empty"
             exit 2

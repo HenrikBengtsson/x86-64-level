@@ -222,7 +222,7 @@ done
 
 
 # x86-64-level --assert=<non-integer>
-for level in 1.2 world; do
+for level in 1.2 world 2=9 =; do
     echo "* x86-64-level --assert=${level} (exception)"
     stderr=$(x86-64-level --assert="${level}" 2>&1)
     exit_code=$?

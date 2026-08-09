@@ -6,6 +6,10 @@
    `--ass--ert=2`, would be silently accepted as `--assert=2`, because
    all `--` were dropped.
 
+ * Calling `x86-64-level --assert=2=9` would be silently accepted as
+   `--assert=9`, because the option value was parsed from the last
+   `=`, and not the first one.
+
 ## Miscellaneous
 
  * Remove stray `--assert` flag, which had no effect. Note that
