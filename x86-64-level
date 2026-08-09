@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9006
+#' Version: 0.2.2-9007
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -101,6 +101,10 @@ get_cpu_flags() {
     flags=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
     flags="${flags#*:}"
     flags="${flags## }"
+    if [[ ! ${flags} =~ [^[:space:]] ]]; then
+        echo >&2 "ERROR: No CPU 'flags' entry in the input data"
+        exit 1
+    fi
     if grep -v -q -E "^[[:lower:][:digit:]_ ]+$" <<< "${flags}"; then
         echo >&2 "ERROR: Cannot reliably infer the CPU x86-64 level, because the format of the CPU flags comprise of other symbols than only lower-case letters, digits, and underscores: '${flags}'"
         exit 1
@@ -169,10 +173,6 @@ determine_cpu_version() {
 report_cpu_version() {
     read_input
     flags=$(get_cpu_flags)
-    if [[ -z ${flags} ]]; then
-        echo >&2 "ERROR: No CPU 'flags' entry in the input data"
-        exit 1
-    fi
     determine_cpu_version
     echo "${level}"
 }

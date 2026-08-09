@@ -352,6 +352,41 @@ if [[ -n ${stdout} ]]; then
 fi
 
 
+# x86-64-level - <<< <no or empty 'flags' entry>
+inputs=("model name: Fake CPU" "flags:" "flags:   ")
+for input in "${inputs[@]}"; do
+    echo "* x86-64-level - <<< '${input}' (exception)"
+    stderr=$(x86-64-level - <<< "${input}" 2>&1)
+    exit_code=$?
+    if [[ ${exit_code} -eq 0 ]]; then
+        >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if [[ -z ${stderr} ]]; then
+        >&2 echo "ERROR: No error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
+        >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if ! grep -q -F "ERROR: No CPU 'flags' entry" <<< "${stderr}"; then
+        >&2 echo "ERROR: Unexpected error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Outputs nothing to stdout
+    stdout=$(x86-64-level - <<< "${input}" 2> /dev/null)
+    if [[ -n ${stdout} ]]; then
+        >&2 echo "ERROR: Detected output to standard output: ${stdout}"
+        nerrors=$((nerrors + 1))
+    fi
+done
+
+
 echo "* x86-64-level - <<< 'flags: AVX' (exception)"
 stderr=$(x86-64-level - <<< 'flags: AVX' 2>&1)
 exit_code=$?

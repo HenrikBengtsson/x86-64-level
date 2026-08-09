@@ -10,6 +10,10 @@
    `--assert=9`, because the option value was parsed from the last
    `=`, and not the first one.
 
+ * `x86-64-level` would report on the CPU flags being malformed, when
+   there was no `flags` entry at all.  Also, an empty `flags` entry
+   would silently give level 0.
+
 ## Miscellaneous
 
  * Remove stray `--assert` flag, which had no effect. Note that
