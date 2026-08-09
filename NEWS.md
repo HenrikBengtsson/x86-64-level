@@ -1,6 +1,9 @@
 # Version (development version)
 
- * ...
+## Miscellaneous
+
+ * Remove stray `--assert` flag, which had no effect. Note that
+   `--assert=<level>` remains.
 
 
 # Version 0.2.2 [2023-05-25]

@@ -41,7 +41,7 @@
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9000
+#' Version: 0.2.2-9001
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/ucsf-wynton/wynton-tools
 #'
@@ -195,8 +195,6 @@ while [[ $# -gt 0 ]]; do
         verbose=true
     elif [[ "$1" == "-" ]]; then
         stdin=true
-    elif [[ "$1" == "--assert" ]]; then
-        verbose=true
     ## Options (--key=value):
     elif [[ "$1" =~ ^--.*=.*$ ]]; then
         key=${1//--}
