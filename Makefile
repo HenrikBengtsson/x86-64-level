@@ -1,3 +1,5 @@
+.PHONY: all shellcheck check
+
 all: shellcheck check
 
 shellcheck:

@@ -20,7 +20,7 @@ if ! grep -q -E "^[[:digit:]]+([.-][[:digit:]]+)+$" <<< "${version}"; then
 fi
 
 ## Outputs nothing to stderr
-stderr=$( { >&2 x86-64-level --version > /dev/null; } 2>&1 )
+stderr=$( { x86-64-level --version > /dev/null; } 2>&1 )
 if [[ -n ${stderr} ]]; then
     >&2 echo "ERROR: Detected output to standard error: ${stderr}"
     nerrors=$((nerrors + 1))
@@ -67,7 +67,7 @@ if ! grep -q -E "^Options:" <<< "${help}"; then
 fi
 
 ## Outputs nothing to stderr
-stderr=$( { >&2 x86-64-level --help > /dev/null; } 2>&1 )
+stderr=$( { x86-64-level --help > /dev/null; } 2>&1 )
 if [[ -n ${stderr} ]]; then
     >&2 echo "ERROR: Detected output to standard error: ${stderr}"
     nerrors=$((nerrors + 1))
@@ -94,7 +94,7 @@ if [[ ${level} -lt 1 ]] || [[ ${level} -gt 4 ]]; then
 fi
 
 ## Outputs nothing to stderr
-stderr=$( { >&2 x86-64-level > /dev/null; } 2>&1 )
+stderr=$( { x86-64-level > /dev/null; } 2>&1 )
 if [[ -n ${stderr} ]]; then
     >&2 echo "ERROR: Detected output to standard error: ${stderr}"
     nerrors=$((nerrors + 1))
@@ -115,7 +115,7 @@ if [[ ${exit_code} -ne 0 ]]; then
 fi
 
 ## Outputs nothing to stdout
-stdout=$( x86-64-level --assert="${level}"> /dev/null )
+stdout=$(x86-64-level --assert="${level}")
 if [[ -n ${stdout} ]]; then
     >&2 echo "ERROR: Detected output to standard output: ${stdout}"
     nerrors=$((nerrors + 1))
@@ -134,7 +134,7 @@ if [[ ${exit_code} -ne 0 ]]; then
 fi
 
 ## Outputs nothing to stdout
-stdout=$( x86-64-level --assert="${level}"> /dev/null )
+stdout=$( x86-64-level --assert="${level}")
 if [[ -n ${stdout} ]]; then
     >&2 echo "ERROR: Detected output to standard output: ${stdout}"
     nerrors=$((nerrors + 1))
@@ -174,14 +174,138 @@ for truth in $(seq 0 "$((${#cpu_flags[@]} - 1))"); do
     fi    
     
     ## Outputs nothing to stderr
-    stderr=$( { >&2 x86-64-level <<< "flags: ${flags}" > /dev/null; } 2>&1 )
+    stderr=$( { x86-64-level - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
     if [[ -n ${stderr} ]]; then
         >&2 echo "ERROR: Detected output to standard error: ${stderr}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Option --verbose explains the identified level, on stderr
+    echo "* x86-64-level --verbose - <<< 'flags: ${flags}'"
+    level=$(x86-64-level --verbose - <<< "flags: ${flags}" 2> /dev/null)
+    if [[ "${level}" -ne "${truth}" ]]; then
+        >&2 echo "ERROR: Unexpected level: ${level} != ${truth}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    stderr=$( { x86-64-level --verbose - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
+    if [[ $(wc -l <<< "${stderr}") -ne 1 ]]; then
+        >&2 echo "ERROR: Expected a single explanation: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Level 0 means no x86-64 support, i.e. there is no 'x86-64-v0'
+    if [[ ${truth} -eq 0 ]]; then
+        label="no x86-64 level"
+    else
+        label="x86-64-v${truth}"
+    fi
+    if ! grep -q -F "Identified ${label}," <<< "${stderr}"; then
+        >&2 echo "ERROR: Unexpected explanation: '${stderr}'"
         nerrors=$((nerrors + 1))
     fi
 done
 
 
+
+
+#--------------------------------------------------------------------------
+# x86-64-level --verbose reports on all missing CPU flags
+#--------------------------------------------------------------------------
+## An AMD E2-3800 CPU, which has 'avx', but neither 'avx2', 'bmi2', nor
+## 'fma', i.e. it is missing three of the x86-64-v3 flags [#11]
+flags="lm cmov cx8 fpu fxsr mmx syscall sse2 cx16 lahf_lm popcnt sse4_1 sse4_2 ssse3 avx bmi1 f16c abm movbe xsave"
+
+echo "* x86-64-level --verbose - <<< <CPU missing three x86-64-v3 flags>"
+level=$(x86-64-level --verbose - <<< "flags: ${flags}" 2> /dev/null)
+if [[ "${level}" -ne 2 ]]; then
+    >&2 echo "ERROR: Unexpected level: ${level} != 2"
+    nerrors=$((nerrors + 1))
+fi
+
+stderr=$( { x86-64-level --verbose - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
+if ! grep -q -F "requires 'avx2', 'bmi2', and 'fma', which are not supported" <<< "${stderr}"; then
+    >&2 echo "ERROR: Does not report on all missing CPU flags: '${stderr}'"
+    nerrors=$((nerrors + 1))
+fi
+
+
+#--------------------------------------------------------------------------
+# x86-64-level reading the CPU information from a file
+#
+# Note, environment variable 'X86_64_LEVEL_CPUINFO' is for testing only
+#--------------------------------------------------------------------------
+cpuinfo=$(mktemp)
+
+## A 64-bit CPU where the operating system reports incomplete CPU
+## flags, i.e. neither 'lm' nor 'syscall', which happens on some
+## virtual machines
+cat > "${cpuinfo}" <<EOF
+model name	: Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht hypervisor pni ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c lahf_lm bmi1 avx2 bmi2
+EOF
+
+if [[ $(uname -m) == "x86_64" ]]; then
+    echo "* x86-64-level (64-bit OS, but incomplete CPU flags)"
+    level=$(X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level 2> /dev/null)
+    if [[ "${level}" -ne 0 ]]; then
+        >&2 echo "ERROR: Unexpected level: ${level} != 0"
+        nerrors=$((nerrors + 1))
+    fi
+
+    stderr=$( { X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level > /dev/null; } 2>&1 )
+    if ! grep -q -E "^WARNING: .*64-bit operating system" <<< "${stderr}"; then
+        >&2 echo "ERROR: Does not warn on incomplete CPU flags: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## No warning when the CPU information is read from another machine
+    stderr=$( { x86-64-level - < "${cpuinfo}" > /dev/null; } 2>&1 )
+    if [[ -n ${stderr} ]]; then
+        >&2 echo "ERROR: Detected output to standard error: ${stderr}"
+        nerrors=$((nerrors + 1))
+    fi
+fi
+
+## No warning when an x86-64 level is identified
+cat > "${cpuinfo}" <<EOF
+flags		: lm cmov cx8 fpu fxsr mmx syscall sse2
+EOF
+
+echo "* x86-64-level (complete CPU flags)"
+level=$(X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level 2> /dev/null)
+if [[ "${level}" -ne 1 ]]; then
+    >&2 echo "ERROR: Unexpected level: ${level} != 1"
+    nerrors=$((nerrors + 1))
+fi
+
+stderr=$( { X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level > /dev/null; } 2>&1 )
+if [[ -n ${stderr} ]]; then
+    >&2 echo "ERROR: Detected output to standard error: ${stderr}"
+    nerrors=$((nerrors + 1))
+fi
+
+rm -f "${cpuinfo}"
+
+
+# x86-64-level with a non-existing CPU information file
+echo "* x86-64-level (no such CPU information file) (exception)"
+stderr=$(X86_64_LEVEL_CPUINFO="${cpuinfo}" x86-64-level 2>&1)
+exit_code=$?
+if [[ ${exit_code} -eq 0 ]]; then
+    >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
+    nerrors=$((nerrors + 1))
+fi
+
+if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR: No such file:"; then
+    >&2 echo "ERROR: Unexpected error message: '${stderr}'"
+    nerrors=$((nerrors + 1))
+fi
+
+if [[ $(wc -l <<< "${stderr}") -ne 1 ]]; then
+    >&2 echo "ERROR: Expected a single error message: '${stderr}'"
+    nerrors=$((nerrors + 1))
+fi
 
 
 #--------------------------------------------------------------------------
@@ -222,7 +346,7 @@ done
 
 
 # x86-64-level --assert=<non-integer>
-for level in 1.2 world; do
+for level in 1.2 world 2=9 =; do
     echo "* x86-64-level --assert=${level} (exception)"
     stderr=$(x86-64-level --assert="${level}" 2>&1)
     exit_code=$?
@@ -254,6 +378,39 @@ for level in 1.2 world; do
     fi
 done
 
+
+# x86-64-level <unknown option>
+for option in --foo=1 --ass--ert=2 --assert--=2 --bar; do
+    echo "* x86-64-level ${option} (exception)"
+    stderr=$(x86-64-level "${option}" 2>&1)
+    exit_code=$?
+    if [[ ${exit_code} -eq 0 ]]; then
+        >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if [[ -z ${stderr} ]]; then
+        >&2 echo "ERROR: No error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
+        >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if ! grep -q -F "ERROR: Unknown option: ${option}" <<< "${stderr}"; then
+        >&2 echo "ERROR: Unexpected error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Outputs nothing to stdout
+    stdout=$(x86-64-level "${option}" 2> /dev/null)
+    if [[ -n ${stdout} ]]; then
+        >&2 echo "ERROR: Detected output to standard output: ${stdout}"
+        nerrors=$((nerrors + 1))
+    fi
+done
 
 
 # x86-64-level --assert=''
@@ -319,6 +476,41 @@ if [[ -n ${stdout} ]]; then
 fi
 
 
+# x86-64-level - <<< <no or empty 'flags' entry>
+inputs=("model name: Fake CPU" "flags:" "flags:   ")
+for input in "${inputs[@]}"; do
+    echo "* x86-64-level - <<< '${input}' (exception)"
+    stderr=$(x86-64-level - <<< "${input}" 2>&1)
+    exit_code=$?
+    if [[ ${exit_code} -eq 0 ]]; then
+        >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if [[ -z ${stderr} ]]; then
+        >&2 echo "ERROR: No error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
+        >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if ! grep -q -F "ERROR: No CPU 'flags' entry" <<< "${stderr}"; then
+        >&2 echo "ERROR: Unexpected error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Outputs nothing to stdout
+    stdout=$(x86-64-level - <<< "${input}" 2> /dev/null)
+    if [[ -n ${stdout} ]]; then
+        >&2 echo "ERROR: Detected output to standard output: ${stdout}"
+        nerrors=$((nerrors + 1))
+    fi
+done
+
+
 echo "* x86-64-level - <<< 'flags: AVX' (exception)"
 stderr=$(x86-64-level - <<< 'flags: AVX' 2>&1)
 exit_code=$?
@@ -349,6 +541,47 @@ if [[ -n ${stdout} ]]; then
     nerrors=$((nerrors + 1))
 fi
 
+
+# x86-64-level --assert=<level> - <<< <invalid input>
+inputs=("model name: Fake CPU" "flags:" "flags: AVX")
+for input in "${inputs[@]}"; do
+    echo "* x86-64-level --assert=1 - <<< '${input}' (exception)"
+    stderr=$(x86-64-level --assert=1 - <<< "${input}" 2>&1)
+    exit_code=$?
+    if [[ ${exit_code} -eq 0 ]]; then
+        >&2 echo "ERROR: Exit code should be non-zero: ${exit_code}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if [[ -z ${stderr} ]]; then
+        >&2 echo "ERROR: No error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Reports on the invalid input, and not on a failed assertion
+    if ! head -n 1 <<< "${stderr}" | grep -q -E "^ERROR:"; then
+        >&2 echo "ERROR: Standard error output does not begin with 'ERROR:': '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if grep -q -F "which is less than the required" <<< "${stderr}"; then
+        >&2 echo "ERROR: Reports on a failed assertion, and not on the invalid input: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Reports the error once, i.e. does not continue after the failure
+    if [[ $(wc -l <<< "${stderr}") -ne 1 ]]; then
+        >&2 echo "ERROR: Expected a single error message: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    ## Outputs nothing to stdout
+    stdout=$(x86-64-level --assert=1 - <<< "${input}" 2> /dev/null)
+    if [[ -n ${stdout} ]]; then
+        >&2 echo "ERROR: Detected output to standard output: ${stdout}"
+        nerrors=$((nerrors + 1))
+    fi
+done
 
 
 #--------------------------------------------------------------------------

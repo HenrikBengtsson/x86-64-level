@@ -8,11 +8,11 @@ x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4, e.g.
 
 ```sh
 $ x86-64-level
-3
+2
 ```
 
 
-# Background
+## Background
 
 **x86-64** is a 64-bit version of the x86 CPU instruction set
 supported by AMD and Intel CPUs, among others.  Since the first
@@ -33,7 +33,7 @@ x86-64-v2 ⊂ x86-64-v3 ⊂ x86-64-v4.  For a CPU to support a level, it
 must support _all_ CPU features of that version level, and, because
 they are subsets of each other, all those of the lower versions.
 
-Software can be written so that they use the most powerful set of CPU
+Software can be written so that it uses the most powerful set of CPU
 features available.  This optimization happens at compile time and
 allows the software to run more efficiently.  However, a software
 binary that was compiled towards the x86-64-v4 level cannot run on an
@@ -41,27 +41,27 @@ older machine with a CPU that only supports, say, x86-64-v3.  If we
 attempt to run the software on the older machine, it will crash and we
 might get something like:
 
-```
+```txt
  *** caught illegal operation ***
 address 0x2b3a8b234ccd, cause 'illegal operand'
 ```
 
 or
 
-```
+```txt
 Illegal instruction (core dumped)
 ```
 
 This is because the older CPU does not understand one of the CPU
-instructions ("operands").  Note that the software might not crash
-each time.  It will only do so if it reaches the part of the code that
-uses a CPU instruction that is not recognized by the current CPU.
+instructions.  Note that the software might not crash each time.  It
+will only do so if it reaches the part of the code that uses a CPU
+instruction that is not recognized by the current CPU.
 
 In contrast, if we compile the software towards the older x86-64-v3
 machine, the produced binary will only use x86-64-v3 instructions and
-will therefor also run on the newer x86-64-v4 machine.
+will therefore also run on the newer x86-64-v4 machine.
 
-Tips: If you work on a high-performance compute (HPC) environment with
+Tip: If you work on a high-performance compute (HPC) environment with
 compute nodes of different generations of CPUs, and you want a smooth
 ride, compile your software tools to use the oldest x86-64 level.
 This won't make best use of the more modern CPUs, but the software
@@ -69,16 +69,16 @@ will run on all compute nodes and you won't run into the 'caught
 illegal operation' problem.
 
 
-# Usage
+## Usage
 
-## Finding CPU's x86-64 level
+### Finding CPU's x86-64 level
 
 This tool, `x86-64-level`, allows you to query which x86-64 level the
-CPU on current machine supports.  For example,
+CPU on the current machine supports.  For example,
 
 ```sh
 $ x86-64-level
-3
+2
 ```
 
 and
@@ -86,7 +86,7 @@ and
 ```sh
 $ level=$(x86-64-level)
 $ echo "x86-64-v${level}"
-x86-64-v3
+x86-64-v2
 ```
 
 If you want to get an explanation for the identified level, specify
@@ -94,32 +94,50 @@ option `--verbose`, e.g.
 
 ```sh
 $ x86-64-level --verbose
-Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which
-is not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
-3
+Identified x86-64-v2, because x86-64-v3 requires 'avx2', 'bmi2', and
+'fma', which are not supported by this CPU [AMD E2-3800 APU with
+Radeon(TM) HD Graphics]
+2
 ```
 
 
-## Assert minimum x86-64 level
+### Querying another machine
+
+By default, `x86-64-level` reads `/proc/cpuinfo` on the current
+machine.  If you specify `-`, it reads the CPU information from the
+standard input instead, which means you can identify the level of a
+machine where the tool is not installed, e.g.
+
+```sh
+$ ssh server.example.org cat /proc/cpuinfo | x86-64-level -
+4
+```
+
+This works also on a saved copy of the CPU information, which is handy
+if you collect `/proc/cpuinfo` from the compute nodes of an HPC
+cluster and identify their levels afterward.
+
+
+### Assert minimum x86-64 level
 
 To test if the CPU supports a minimum level of x86-64, use the
 `--assert=<level>` option.  For example,
 
 ```sh
 $ x86-64-level
-3
+2
+
+$ x86-64-level --assert=1
+$ echo $?
+0
 
 $ x86-64-level --assert=2
 $ echo $?
 0
 
 $ x86-64-level --assert=3
-$ echo $?
-0
-
-$ x86-64-level --assert=4
-The CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] on this host ('dev2')
-supports x86-64-v3, which is less than the required x86-64-v4
+The CPU [AMD E2-3800 APU with Radeon(TM) HD Graphics] on this host
+('dev2') supports x86-64-v2, which is less than the required x86-64-v3
 $ echo $?
 1
 ```
@@ -134,6 +152,47 @@ This will output that error message (to the standard error) and exit
 the script with exit code 1, if, and only if, the current machine does
 not support x86-64-v4. In all other cases, it continues silently.
 
+
+## Frequently asked questions
+
+### Why is the reported level lower than expected?
+
+The level is inferred from the CPU flags that the operating system
+reports in `/proc/cpuinfo`, and not from what the silicon can do.  If
+the vendor or the firmware disables a feature, the flag is not
+reported, and the level drops accordingly.  For example, the 12th
+generation Intel Core CPUs do have AVX-512 on their Performance-cores
+(P-cores), but it is disabled, because their Efficient-cores (E-cores)
+do not implement it.  Such a CPU reports x86-64-v3, whereas an 11th
+generation CPU with AVX-512 enabled reports x86-64-v4.
+
+To see which CPU flags are missing for the next level, use
+`--verbose`, e.g.
+
+```sh
+$ x86-64-level --verbose
+Identified x86-64-v3, because x86-64-v4 requires 'avx512f', 'avx512bw',
+'avx512cd', 'avx512dq', and 'avx512vl', which are not supported by this
+CPU [12th Gen Intel(R) Core(TM) i5-12600K]
+3
+```
+
+
+### Why is there no level for a CPU that has AVX, but not AVX2?
+
+The four x86-64 levels are not defined by this tool. They are defined
+by the [x86-64 psABI], which is what the GNU Compiler Collection
+(GCC), Clang, and glibc implement, e.g. `gcc -march=x86-64-v3`.  A CPU
+with AVX, but without AVX2, is x86-64-v2, because x86-64-v3 requires
+also BMI2 and FMA, among others.
+
+
+### Does it work on macOS, or on an arm64 machine?
+
+No.  The tool needs `/proc/cpuinfo`, which exists only on Linux, and
+only x86-64 CPUs report the `flags` entry that it parses.  You can
+still use such a machine to query a Linux x86-64 machine; see
+'Querying another machine' above.
 
 
 ## Installation
@@ -155,10 +214,16 @@ $ ./x86-64-level --version
 $ ./x86-64-level
 ```
 
+Alternatively, you may be able to install `x86-64-level` as a package
+for your Linux distribution:
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/x86-64-level.svg)](https://repology.org/project/x86-64-level/versions)
+
+
 ## License
 
 The content of this repository is released under the [CC BY-SA 4.0]
-license.
+license, which is also available in the [LICENSE] file.
 
 
 ## Authors
@@ -168,8 +233,16 @@ license.
 * StackExchange user [gioele]
 
 
-[CPU microarchitecture levels]: https://www.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+Parts of the FAQ section and some of the unit tests have been written
+or revised with the help of artificial intelligence (Claude Opus
+5). Any such contribution has carefully been reviewed by the
+maintainer before it was committed.
+
+
+[CPU microarchitecture levels]: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+[x86-64 psABI]: https://gitlab.com/x86-psABIs/x86-64-ABI
 [Gilles' implementation]: https://unix.stackexchange.com/a/631320
 [Gilles]: https://stackexchange.com/users/164368/
 [gioele]: https://unix.stackexchange.com/users/14861/
 [CC BY-SA 4.0]: https://creativecommons.org/licenses/by-sa/4.0/
+[LICENSE]: LICENSE

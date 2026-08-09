@@ -6,54 +6,58 @@
 #' i.e. x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4.
 #'
 #' Usage:
-#' x86-64-level
+#' x86-64-level [options] [-]
 #'
 #' Options:
 #'   --help            Show this help
 #'   --version         Show the version of this tool
 #'   --verbose         Explain the identified level
-#'   --assert=<level>  Assert that CPU supports x86-64-v<level> with
-#'                     exit code 0 is supported, otherwise 1
+#'   --assert=<level>  Assert that CPU supports x86-64-v<level>,
+#'                     exiting with code 0 if supported, otherwise 1
+#'   -                 Read the CPU information from the standard
+#'                     input, instead of from /proc/cpuinfo
 #'
 #' Examples:
 #' $ x86-64-level
-#' 3
+#' 2
 #'
 #' $ level=$(x86-64-level)
 #' $ echo "x86-64-v${level}"
-#' x86-64-v3
+#' x86-64-v2
 #'
 #' $ x86-64-level --verbose
-#' Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which is
-#' not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
-#' 3
+#' Identified x86-64-v2, because x86-64-v3 requires 'avx2', 'bmi2',
+#' and 'fma', which are not supported by this CPU [AMD E2-3800 APU
+#' with Radeon(TM) HD Graphics]
+#' 2
 #'
 #' $ cat /proc/cpuinfo | x86-64-level -
-#' 3
+#' 2
 #'
 #' $ x86-64-level --assert=2
 #' $ echo $?
 #' 0
 #'
-#' $ x86-64-level --assert=4
-#' The CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] on this host ('dev2')
-#' supports x86-64-v3, which is less than the required x86-64-v4
+#' $ x86-64-level --assert=3
+#' The CPU [AMD E2-3800 APU with Radeon(TM) HD Graphics] on this host
+#' ('dev2') supports x86-64-v2, which is less than the required
+#' x86-64-v3
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2
+#' Version: 0.3.0
 #' License: CC BY-SA 4.0
-#' Source code: https://github.com/ucsf-wynton/wynton-tools
+#' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
 #' Authors:
-#' * Henrik Bengtsson (expanded on Gilles implementation [2])
+#' * Henrik Bengtsson (expanded on Gilles' implementation [2])
 #' * StackExchange user 'Gilles'
 #'   <https://stackexchange.com/users/164368/>
 #' * StackExchange user 'gioele'
 #'   <https://unix.stackexchange.com/users/14861/>
 #'
 #' References:
-#' [1] https://www.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+#' [1] https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
 #' [2] https://unix.stackexchange.com/a/631320
 
 #---------------------------------------------------------------------
@@ -71,13 +75,26 @@ version() {
 #---------------------------------------------------------------------
 # CPU functions
 #---------------------------------------------------------------------
+## The file holding the CPU information.  The environment variable is
+## used for testing only, and is not part of the public interface
+cpuinfo=${X86_64_LEVEL_CPUINFO:-/proc/cpuinfo}
+
+## The CPU information read, the CPU flags parsed from it, and the
+## x86-64 level inferred from those flags
 data=
+flags=
+level=0
+
 read_input() {
     if [[ -z ${data} ]]; then
         if ${stdin}; then
             data=$(< /dev/stdin)
         else
-            data=$(< /proc/cpuinfo)
+            if [[ ! -f ${cpuinfo} ]]; then
+                echo >&2 "ERROR: No such file: ${cpuinfo} (this tool requires Linux)"
+                exit 1
+            fi
+            data=$(< "${cpuinfo}")
         fi
         if [[ -z ${data} ]]; then
             echo >&2 "ERROR: Input data is empty"
@@ -87,6 +104,7 @@ read_input() {
 }
 
 get_cpu_name() {
+    local bfr
     local name
     bfr=$(grep -E "^model name[[:space:]]*:" <<< "${data}")
     name=$(echo "${bfr}" | head -n 1)
@@ -96,15 +114,19 @@ get_cpu_name() {
 
 
 get_cpu_flags() {
-    local flags
-    flags=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
-    flags="${flags#*:}"
-    flags="${flags## }"
-    if grep -v -q -E "^[[:lower:][:digit:]_ ]+$" <<< "${flags}"; then
-        echo >&2 "ERROR: Cannot reliably infer the CPU x86-64 level, because the format of the CPU flags comprise of other symbols than only lower-case letters, digits, and underscores: '${flags}'"
+    local bfr
+    bfr=$(grep "^flags[[:space:]]*:" <<< "${data}" | head -n 1)
+    bfr="${bfr#*:}"
+    bfr="${bfr## }"
+    if [[ ! ${bfr} =~ [^[:space:]] ]]; then
+        echo >&2 "ERROR: No CPU 'flags' entry in the input data"
         exit 1
     fi
-    echo "${flags}"
+    if grep -v -q -E "^[[:lower:][:digit:]_ ]+$" <<< "${bfr}"; then
+        echo >&2 "ERROR: Cannot reliably infer the CPU x86-64 level, because the format of the CPU flags comprise of other symbols than only lower-case letters, digits, and underscores: '${bfr}'"
+        exit 1
+    fi
+    echo "${bfr}"
 }
 
 
@@ -114,11 +136,61 @@ validate_cpu_flags() {
 }
 
 
-has_cpu_flags() {
-    local flag
+## Reports on the identified level, with the CPU name, if known
+explain() {
     local msg
     local cpu_name
-    
+    msg=$1
+    cpu_name=$(get_cpu_name)
+    [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
+    echo >&2 "${msg}"
+}
+
+
+## The identified level, as reported to the user.  Level 0 means that
+## the CPU does not support x86-64 at all, i.e. there is no such thing
+## as an 'x86-64-v0' level
+level_label() {
+    if [[ $1 -eq 0 ]]; then
+        echo "no x86-64 level"
+    else
+        echo "x86-64-v$1"
+    fi
+}
+
+
+## Formats CPU flags as: 'a', or 'a' and 'b', or 'a', 'b', and 'c'
+quote_flags() {
+    local flag
+    local res
+    local nbr
+    local ii
+
+    nbr=$#
+    ii=0
+    res=
+    for flag in "$@"; do
+        ii=$((ii + 1))
+        if [[ ${ii} -eq 1 ]]; then
+            res="'${flag}'"
+        elif [[ ${ii} -lt ${nbr} ]]; then
+            res="${res}, '${flag}'"
+        elif [[ ${nbr} -eq 2 ]]; then
+            res="${res} and '${flag}'"
+        else
+            res="${res}, and '${flag}'"
+        fi
+    done
+    echo "${res}"
+}
+
+
+has_cpu_flags() {
+    local flag
+    local missing
+    local msg
+
+    missing=()
     for flag; do
         ## Note, it's important to keep a trailing space
         case " ${flags} " in
@@ -126,25 +198,30 @@ has_cpu_flags() {
                 :
                 ;;
             *)
-                if ${verbose}; then
-                    msg="Identified x86-64-v${level}, because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
-                    cpu_name=$(get_cpu_name)
-                    [[ -n ${cpu_name} ]] && msg="${msg} [${cpu_name}]"
-                    echo >&2 "${msg}"
-                fi
-                return 1
+                missing+=("${flag}")
                 ;;
         esac
     done
+
+    [[ ${#missing[@]} -eq 0 ]] && return 0
+
+    if ${verbose}; then
+        if [[ ${#missing[@]} -eq 1 ]]; then
+            msg="which is not supported by this CPU"
+        else
+            msg="which are not supported by this CPU"
+        fi
+        explain "Identified $(level_label "${level}"), because x86-64-v$((level + 1)) requires $(quote_flags "${missing[@]}"), ${msg}"
+    fi
+
+    return 1
 }
 
 
-level=0
-
 determine_cpu_version() {
-    ## x86-64-v0 (can this happen?)
+    ## No x86-64 support at all, e.g. an i386 or i686 CPU
     level=0
-    
+
     ## x86-64-v1
     has_cpu_flags lm cmov cx8 fpu fxsr mmx syscall sse2 || return 0
     level=1
@@ -152,7 +229,7 @@ determine_cpu_version() {
     ## x86-64-v2
     has_cpu_flags cx16 lahf_lm popcnt sse4_1 sse4_2 ssse3 || return 0
     level=2
-    
+
     ## x86-64-v3
     has_cpu_flags avx avx2 bmi1 bmi2 f16c fma abm movbe xsave || return 0
     level=3
@@ -160,17 +237,35 @@ determine_cpu_version() {
     ## x86-64-v4
     has_cpu_flags avx512f avx512bw avx512cd avx512dq avx512vl || return 0
     level=4
+
+    if ${verbose}; then
+        explain "Identified x86-64-v${level}, which is the highest x86-64 level"
+    fi
+}
+
+
+## Warns if no x86-64 support was identified, although the operating
+## system is 64-bit.  Then the CPU flags reported in /proc/cpuinfo must
+## be incomplete, which can happen in a virtual machine.  This applies
+## only to the current machine, i.e. not when reading from the standard
+## input
+warn_if_64bit_os() {
+    local machine
+
+    ${stdin} && return 0
+    [[ ${level} -ne 0 ]] && return 0
+    machine=$(uname -m 2> /dev/null)
+    [[ ${machine} == "x86_64" ]] || return 0
+
+    echo >&2 "WARNING: The CPU flags in ${cpuinfo} indicate no x86-64 support, although this machine runs a 64-bit operating system ('uname -m' reports '${machine}'), i.e. the reported CPU flags are incomplete, which can happen in a virtual machine"
 }
 
 
 report_cpu_version() {
     read_input
-    flags=$(get_cpu_flags)
-    if [[ -z ${flags} ]]; then
-        echo >&2 "ERROR: No CPU 'flags' entry in the input data"
-        exit 1
-    fi
+    flags=$(get_cpu_flags) || exit $?
     determine_cpu_version
+    warn_if_64bit_os
     echo "${level}"
 }
 
@@ -195,13 +290,11 @@ while [[ $# -gt 0 ]]; do
         verbose=true
     elif [[ "$1" == "-" ]]; then
         stdin=true
-    elif [[ "$1" == "--assert" ]]; then
-        verbose=true
     ## Options (--key=value):
     elif [[ "$1" =~ ^--.*=.*$ ]]; then
-        key=${1//--}
-        key=${key//=*}
-        value=${1//--[[:alpha:]]*=}
+        key=${1%%=*}
+        key=${key#--}
+        value=${1#*=}
         if [[ -z ${value} ]]; then
             echo >&2 "ERROR: Option '--${key}' must not be empty"
             exit 2
@@ -228,12 +321,12 @@ done
 
 if [[ -n ${assert} ]]; then
     validate_cpu_flags
-    version=$(report_cpu_version)
+    version=$(report_cpu_version) || exit $?
     if [[ ${version} -lt ${assert} ]]; then
         read_input
         cpu_info=$(get_cpu_name)
         [[ -n ${cpu_info} ]] && cpu_info=" [${cpu_info}]"
-        >&2 echo "The CPU${cpu_info} on this host ('${HOSTNAME}') supports x86-64-v${version}, which is less than the required x86-64-v${assert}"
+        >&2 echo "The CPU${cpu_info} on this host ('${HOSTNAME}') supports $(level_label "${version}"), which is less than the required x86-64-v${assert}"
         exit 1
     fi
 else
