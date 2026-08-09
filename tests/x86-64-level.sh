@@ -179,6 +179,25 @@ for truth in $(seq 0 "$((${#cpu_flags[@]} - 1))"); do
         >&2 echo "ERROR: Detected output to standard error: ${stderr}"
         nerrors=$((nerrors + 1))
     fi
+
+    ## Option --verbose explains the identified level, on stderr
+    echo "* x86-64-level --verbose - <<< 'flags: ${flags}'"
+    level=$(x86-64-level --verbose - <<< "flags: ${flags}" 2> /dev/null)
+    if [[ "${level}" -ne "${truth}" ]]; then
+        >&2 echo "ERROR: Unexpected level: ${level} != ${truth}"
+        nerrors=$((nerrors + 1))
+    fi
+
+    stderr=$( { x86-64-level --verbose - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
+    if [[ $(wc -l <<< "${stderr}") -ne 1 ]]; then
+        >&2 echo "ERROR: Expected a single explanation: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
+
+    if ! grep -q -E "^Identified x86-64-v${truth}," <<< "${stderr}"; then
+        >&2 echo "ERROR: Unexpected explanation: '${stderr}'"
+        nerrors=$((nerrors + 1))
+    fi
 done
 
 
