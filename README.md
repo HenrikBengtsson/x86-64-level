@@ -181,7 +181,7 @@ for your Linux distribution:
 ## License
 
 The content of this repository is released under the [CC BY-SA 4.0]
-license.
+license, which is also available in the [LICENSE] file.
 
 
 ## Authors
@@ -196,3 +196,4 @@ license.
 [Gilles]: https://stackexchange.com/users/164368/
 [gioele]: https://unix.stackexchange.com/users/14861/
 [CC BY-SA 4.0]: https://creativecommons.org/licenses/by-sa/4.0/
+[LICENSE]: LICENSE
