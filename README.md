@@ -8,7 +8,7 @@ x86-64-v1, x86-64-v2, x86-64-v3, or x86-64-v4, e.g.
 
 ```sh
 $ x86-64-level
-3
+2
 ```
 
 
@@ -78,7 +78,7 @@ CPU on the current machine supports.  For example,
 
 ```sh
 $ x86-64-level
-3
+2
 ```
 
 and
@@ -86,7 +86,7 @@ and
 ```sh
 $ level=$(x86-64-level)
 $ echo "x86-64-v${level}"
-x86-64-v3
+x86-64-v2
 ```
 
 If you want to get an explanation for the identified level, specify
@@ -94,9 +94,10 @@ option `--verbose`, e.g.
 
 ```sh
 $ x86-64-level --verbose
-Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which
-is not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
-3
+Identified x86-64-v2, because x86-64-v3 requires 'avx2', 'bmi2', and
+'fma', which are not supported by this CPU [AMD E2-3800 APU with
+Radeon(TM) HD Graphics]
+2
 ```
 
 
@@ -124,19 +125,19 @@ To test if the CPU supports a minimum level of x86-64, use the
 
 ```sh
 $ x86-64-level
-3
+2
+
+$ x86-64-level --assert=1
+$ echo $?
+0
 
 $ x86-64-level --assert=2
 $ echo $?
 0
 
 $ x86-64-level --assert=3
-$ echo $?
-0
-
-$ x86-64-level --assert=4
-The CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] on this host ('dev2')
-supports x86-64-v3, which is less than the required x86-64-v4
+The CPU [AMD E2-3800 APU with Radeon(TM) HD Graphics] on this host
+('dev2') supports x86-64-v2, which is less than the required x86-64-v3
 $ echo $?
 1
 ```

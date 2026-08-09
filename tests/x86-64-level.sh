@@ -210,6 +210,27 @@ done
 
 
 #--------------------------------------------------------------------------
+# x86-64-level --verbose reports on all missing CPU flags
+#--------------------------------------------------------------------------
+## An AMD E2-3800 CPU, which has 'avx', but neither 'avx2', 'bmi2', nor
+## 'fma', i.e. it is missing three of the x86-64-v3 flags [#11]
+flags="lm cmov cx8 fpu fxsr mmx syscall sse2 cx16 lahf_lm popcnt sse4_1 sse4_2 ssse3 avx bmi1 f16c abm movbe xsave"
+
+echo "* x86-64-level --verbose - <<< <CPU missing three x86-64-v3 flags>"
+level=$(x86-64-level --verbose - <<< "flags: ${flags}" 2> /dev/null)
+if [[ "${level}" -ne 2 ]]; then
+    >&2 echo "ERROR: Unexpected level: ${level} != 2"
+    nerrors=$((nerrors + 1))
+fi
+
+stderr=$( { x86-64-level --verbose - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
+if ! grep -q -F "requires 'avx2', 'bmi2', and 'fma', which are not supported" <<< "${stderr}"; then
+    >&2 echo "ERROR: Does not report on all missing CPU flags: '${stderr}'"
+    nerrors=$((nerrors + 1))
+fi
+
+
+#--------------------------------------------------------------------------
 # Exceptions
 #--------------------------------------------------------------------------
 # x86-64-level --assert=<out of range>

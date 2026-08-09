@@ -19,31 +19,33 @@
 #'
 #' Examples:
 #' $ x86-64-level
-#' 3
+#' 2
 #'
 #' $ level=$(x86-64-level)
 #' $ echo "x86-64-v${level}"
-#' x86-64-v3
+#' x86-64-v2
 #'
 #' $ x86-64-level --verbose
-#' Identified x86-64-v3, because x86-64-v4 requires 'avx512f', which is
-#' not supported by this CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz]
-#' 3
+#' Identified x86-64-v2, because x86-64-v3 requires 'avx2', 'bmi2',
+#' and 'fma', which are not supported by this CPU [AMD E2-3800 APU
+#' with Radeon(TM) HD Graphics]
+#' 2
 #'
 #' $ cat /proc/cpuinfo | x86-64-level -
-#' 3
+#' 2
 #'
 #' $ x86-64-level --assert=2
 #' $ echo $?
 #' 0
 #'
-#' $ x86-64-level --assert=4
-#' The CPU [Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz] on this host ('dev2')
-#' supports x86-64-v3, which is less than the required x86-64-v4
+#' $ x86-64-level --assert=3
+#' The CPU [AMD E2-3800 APU with Radeon(TM) HD Graphics] on this host
+#' ('dev2') supports x86-64-v2, which is less than the required
+#' x86-64-v3
 #' $ echo $?
 #' 1
 #'
-#' Version: 0.2.2-9013
+#' Version: 0.2.2-9014
 #' License: CC BY-SA 4.0
 #' Source code: https://github.com/HenrikBengtsson/x86-64-level
 #'
@@ -153,9 +155,38 @@ level_label() {
 }
 
 
+## Formats CPU flags as: 'a', or 'a' and 'b', or 'a', 'b', and 'c'
+quote_flags() {
+    local flag
+    local res
+    local nbr
+    local ii
+
+    nbr=$#
+    ii=0
+    res=
+    for flag in "$@"; do
+        ii=$((ii + 1))
+        if [[ ${ii} -eq 1 ]]; then
+            res="'${flag}'"
+        elif [[ ${ii} -lt ${nbr} ]]; then
+            res="${res}, '${flag}'"
+        elif [[ ${nbr} -eq 2 ]]; then
+            res="${res} and '${flag}'"
+        else
+            res="${res}, and '${flag}'"
+        fi
+    done
+    echo "${res}"
+}
+
+
 has_cpu_flags() {
     local flag
+    local missing
+    local msg
 
+    missing=()
     for flag; do
         ## Note, it's important to keep a trailing space
         case " ${flags} " in
@@ -163,13 +194,23 @@ has_cpu_flags() {
                 :
                 ;;
             *)
-                if ${verbose}; then
-                    explain "Identified $(level_label "${level}"), because x86-64-v$((level + 1)) requires '${flag}', which is not supported by this CPU"
-                fi
-                return 1
+                missing+=("${flag}")
                 ;;
         esac
     done
+
+    [[ ${#missing[@]} -eq 0 ]] && return 0
+
+    if ${verbose}; then
+        if [[ ${#missing[@]} -eq 1 ]]; then
+            msg="which is not supported by this CPU"
+        else
+            msg="which are not supported by this CPU"
+        fi
+        explain "Identified $(level_label "${level}"), because x86-64-v$((level + 1)) requires $(quote_flags "${missing[@]}"), ${msg}"
+    fi
+
+    return 1
 }
 
 
