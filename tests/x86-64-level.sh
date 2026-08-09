@@ -20,7 +20,7 @@ if ! grep -q -E "^[[:digit:]]+([.-][[:digit:]]+)+$" <<< "${version}"; then
 fi
 
 ## Outputs nothing to stderr
-stderr=$( { >&2 x86-64-level --version > /dev/null; } 2>&1 )
+stderr=$( { x86-64-level --version > /dev/null; } 2>&1 )
 if [[ -n ${stderr} ]]; then
     >&2 echo "ERROR: Detected output to standard error: ${stderr}"
     nerrors=$((nerrors + 1))
@@ -67,7 +67,7 @@ if ! grep -q -E "^Options:" <<< "${help}"; then
 fi
 
 ## Outputs nothing to stderr
-stderr=$( { >&2 x86-64-level --help > /dev/null; } 2>&1 )
+stderr=$( { x86-64-level --help > /dev/null; } 2>&1 )
 if [[ -n ${stderr} ]]; then
     >&2 echo "ERROR: Detected output to standard error: ${stderr}"
     nerrors=$((nerrors + 1))
@@ -94,7 +94,7 @@ if [[ ${level} -lt 1 ]] || [[ ${level} -gt 4 ]]; then
 fi
 
 ## Outputs nothing to stderr
-stderr=$( { >&2 x86-64-level > /dev/null; } 2>&1 )
+stderr=$( { x86-64-level > /dev/null; } 2>&1 )
 if [[ -n ${stderr} ]]; then
     >&2 echo "ERROR: Detected output to standard error: ${stderr}"
     nerrors=$((nerrors + 1))
@@ -174,7 +174,7 @@ for truth in $(seq 0 "$((${#cpu_flags[@]} - 1))"); do
     fi    
     
     ## Outputs nothing to stderr
-    stderr=$( { >&2 x86-64-level - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
+    stderr=$( { x86-64-level - <<< "flags: ${flags}" > /dev/null; } 2>&1 )
     if [[ -n ${stderr} ]]; then
         >&2 echo "ERROR: Detected output to standard error: ${stderr}"
         nerrors=$((nerrors + 1))
